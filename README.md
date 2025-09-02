@@ -11,3 +11,9 @@ Music by Nikku4211.
 ```
 make
 ```
+
+## License
+
+[MIT License](LICENSE) with the following exception:
+
+* The music included in this demo may not be reused without the written permission of the author (Nikku4211).
