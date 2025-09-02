@@ -48,8 +48,8 @@ Compo::
 	call SetBank
 
 	ldh a, [hFlags]
-	bit B_FLAGS_SGB, a
-	call nz, InitSGB
+	cp FLAGS_SGB
+	call z, InitSGB
 
 	ldh a, [hFlags]
 	bit B_FLAGS_GBC, a
@@ -238,30 +238,10 @@ DoSound:
 
 SetBank:
 	ldh a, [hFlags]
-	bit B_FLAGS_GBA, a
-	jr nz, .GBA
-	bit B_FLAGS_GBC, a
-	jr nz, .GBC
-	bit B_FLAGS_SGB, a
-	jr nz, .SGB
-
-.DMG
-	ld a, BANK(CompoTiles)
-	ld [rROMB0], a
-	ret
-
-.GBA
-	ld a, BANK(TilesGBA)
-	ld [rROMB0], a
-	ret
-
-.GBC
-	ld a, BANK(TilesGBC)
-	ld [rROMB0], a
-	ret
-
-.SGB
-	ld a, BANK(TilesSGB)
+	or a
+	jr nz, .cont
+	inc a
+.cont
 	ld [rROMB0], a
 	ret
 
@@ -348,7 +328,7 @@ InitGBC::
 	ret
 
 
-SECTION "Tiles", ROMX[$4000], BANK[1]
+SECTION "Tiles", ROMX[$4000], BANK[FLAGS_DMG0]
 CompoTiles:
 	INCBIN "compo_logo.2bpp"
 	INCBIN "compo_text.2bpp"
@@ -362,7 +342,7 @@ CompoObjMap:
 CompoPalette:
 
 
-SECTION "TilesGBC", ROMX[$4000], BANK[3]
+SECTION "TilesGBC", ROMX[$4000], BANK[FLAGS_GBC]
 TilesGBC:
 .compo
 	INCBIN "compo_logo_gbc.2bpp"
@@ -383,7 +363,7 @@ CompoPaletteGBC:
 	INCBIN "compo_button_gbc.pal"
 
 
-SECTION "TilesGBA", ROMX[$4000], BANK[4]
+SECTION "TilesGBA", ROMX[$4000], BANK[FLAGS_GBA]
 TilesGBA:
 .compo
 	INCBIN "compo_logo_gbc.2bpp"
@@ -404,7 +384,7 @@ CompoPaletteGBA:
 	INCBIN "compo_button.pal"
 
 
-SECTION "TilesSGB", ROMX[$4000], BANK[2]
+SECTION "TilesSGB", ROMX[$4000], BANK[FLAGS_SGB]
 TilesSGB:
 .compo
 	INCBIN "compo_logo_sgb.2bpp"

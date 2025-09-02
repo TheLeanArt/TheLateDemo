@@ -67,28 +67,28 @@ EntryPoint:
 	jr nz, .notSGB             ; If not, proceed to setting flags
 
 .SGB:
-	ld b, 1 << B_FLAGS_SGB     ; Set SGB flag
+	ld b, FLAGS_SGB            ; Set flags to SGB
 	jr .setFlags               ; Proceed to setting flags
 
 .notSGB:
 	ld a, b                    ; Load the initial value of B into A
-	ld b, 0                    ; Clear flags
+	ld b, FLAGS_DMG            ; Set flags to DMG
 	cp BOOTUP_B_DMG0           ; Are we running on DMG0?
 	jr nz, .setFlags           ; If not, proceed to setting flags
 
 .DMG0
-	set B_FLAGS_DMG0, b        ; Set DMG0 flag
+	ld b, FLAGS_DMG0           ; Set flags to DMG0
 	jr .setFlags               ; Proceed to setting flags
 
 .GBC:
-	call SetPalettes
+	call SetPalettes           ; Set GBC palettes
 	ld a, b                    ; Load the initial value of B into A
-	ld b, 1 << B_FLAGS_GBC     ; Set GBC flag
+	ld b, FLAGS_GBC            ; Set flags to GBC
 	cp BOOTUP_B_AGB            ; Are we running on GBA?
 	jr nz, .setFlags           ; If not, proceed to setting flags
 
 .GBA:
-	set B_FLAGS_GBA, b         ; Set flags to GBC
+	set B_FLAGS_GBA, b         ; Set GBA flag
 
 .setFlags
 	ld a, b                    ; Load the flags into A
@@ -109,8 +109,8 @@ EntryPoint:
 	call InitTop
 
 	ldh a, [hFlags]            ; Load our flags into the A register
-	bit B_FLAGS_DMG0, a        ; Are we running on DMG0?
-	call z, InitReg            ; If not, draw ®
+	cp FLAGS_DMG0              ; Are we running on DMG0?
+	call nz, InitReg           ; If not, draw ®
 
 .clearOAMLoop
 	xor a                      ; Set A to zero
@@ -156,8 +156,8 @@ EntryPoint:
 
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
-	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .drop                ; If not, skip the SGB delay
+	cp FLAGS_SGB               ; Are we running on SGB?
+	jr nz, .drop               ; If not, skip the SGB delay
 
 	ld b, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
 .waitLoop
@@ -190,8 +190,9 @@ EntryPoint:
 	ld a, [de]                 ; Load the window's Y value
 	ldh [rWY], a               ; Set the Y coordinate
 
-	bit B_FLAGS_DMG0, c        ; Are we running on DMG0?
-	jr nz, .regDone            ; If yes, skip the ® object
+	ld a, c                    ; Load our flags into the A register
+	cp FLAGS_DMG0              ; Are we running on DMG0?
+	jr z, .regDone             ; If yes, skip the ® object
 
 REPT 4
 	inc d                      ; Advance to the next page
