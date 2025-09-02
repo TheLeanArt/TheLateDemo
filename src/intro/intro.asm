@@ -51,45 +51,44 @@ ENDM
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
 SECTION "Start", ROM0[$0100]
-    di                         ; Disable interrupts during setup
-    jr EntryPoint              ; Jump past the header space to our actual code
-    ds $150 - @, 0             ; Allocate space for RGBFIX to insert our ROM header
+	di                         ; Disable interrupts during setup
+	jr EntryPoint              ; Jump past the header space to our actual code
+	ds $150 - @, 0             ; Allocate space for RGBFIX to insert our ROM header
 
 EntryPoint:
-    ld sp, $E000               ; Set the stack pointer to the end of WRAM
+	ld sp, $E000               ; Set the stack pointer to the end of WRAM
 
-    cp BOOTUP_A_CGB            ; GBC/GBA?
+	cp BOOTUP_A_CGB            ; Are we running on GBC/GBA?
 	jr z, .GBC                 ; If yes, handle
 
 .notGBC:
-	ld a, c                    ; Load initial C value into A
-	cp BOOTUP_C_SGB            ; SGB/SGB2?
-	jr nz, .notSGB             ; If not, skip
+	ld a, c                    ; Load the initial value of C into A
+	cp BOOTUP_C_SGB            ; Are we running on SGB/SGB2?
+	jr nz, .notSGB             ; If not, proceed to setting flags
 
 .SGB:
 	ld b, 1 << B_FLAGS_SGB     ; Set SGB flag
-	jr .setFlags               ; Skip to options
+	jr .setFlags               ; Proceed to setting flags
 
 .notSGB:
 	ld a, b                    ; Load the initial value of B into A
-    ld b, 0                    ; Otherwise, clear flags
-	cp BOOTUP_B_DMG0           ; DMG0?
-	jr nz, .setFlags           ; Skip to options
+	ld b, 0                    ; Clear flags
+	cp BOOTUP_B_DMG0           ; Are we running on DMG0?
+	jr nz, .setFlags           ; If not, proceed to setting flags
 
 .DMG0
 	set B_FLAGS_DMG0, b        ; Set DMG0 flag
-	jr .setFlags
+	jr .setFlags               ; Proceed to setting flags
 
 .GBC:
 	call SetPalettes
 	ld a, b                    ; Load the initial value of B into A
-	ld b, 0
-    set B_FLAGS_GBC, b         ; Set flags to GBC
-    cp BOOTUP_B_AGB            ; GBA?
-    jr nz, .setFlags           ; If not, skip
+	ld b, 1 << B_FLAGS_GBC     ; Set GBC flag
+	cp BOOTUP_B_AGB            ; Are we running on GBA?
+	jr nz, .setFlags           ; If not, proceed to setting flags
 
 .GBA:
-    set B_FLAGS_GBA, b         ; Set flags to GBC
+	set B_FLAGS_GBA, b         ; Set flags to GBC
 
 .setFlags
 	ld a, b                    ; Load the flags into A
