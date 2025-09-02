@@ -38,10 +38,11 @@ MACRO CLEAR_LONG
 ENDM
 
 ; @param \1 Page-aligned Tiles prefix
-MACRO COPY_1BPP
+MACRO COPY_1BPP_SAFE
 ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	ld bc, HIGH(\1Tiles.end - \1Tiles) ; Clear B and set C to the page count
 .loop\@
+	rst WaitVRAM        ; Wait for VRAM to become accessible
 	ld a, [de]          ; Load a byte from the address DE points to into the A register
 	ld [hli], a         ; Load the byte in the A register to the address HL points to
 	ld [hli], a         ; Repeat for the second bitplane
