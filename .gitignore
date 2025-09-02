@@ -426,3 +426,6 @@ FodyWeavers.xsd
 *.sym
 *.gb
 *.gbc
+/art/compo/compo_button.pal
+/art/compo/compo_logo.pal
+/art/compo/compo_obj.pal
