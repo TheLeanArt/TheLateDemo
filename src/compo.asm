@@ -60,7 +60,7 @@ Compo::
 	call CopyCompo
 
 .copyObjs
-	ld bc, Tiles.compoObjMap
+	ld bc, CompoObjMap
 	ld hl, wShadowOAM
 	ld d, yCompoObj
 .loop1
@@ -140,9 +140,9 @@ LoopCompo:
 
 	ld a, b
 	and $40
-	add LOW(Tiles.compoObjMap)
+	add LOW(CompoObjMap)
 	ld c, a
-	ld b, HIGH(Tiles.compoObjMap)
+	ld b, HIGH(CompoObjMap)
 .loop4
 	ld a, [bc]
 	inc c
@@ -186,21 +186,13 @@ LoopCompo:
 	jr .loop3
 
 CopyCompo:
-	ld de, STARTOF(VRAM)
-	ld hl, Tiles.compo
-	ld c, HIGH(Tiles.compoMap - Tiles.compo)
-.loop
-	ld a, [hli]         ; Load a byte from the address HL points to into the A register
-	ld [de], a          ; Load the byte in the A register to the address DE points to
-	inc e               ; Increment the source pointer in E
-	jr nz, .loop        ; Stop if B is zero, otherwise keep looping
-	inc d               ; Increment D
-	dec c               ; Decrement the outer loop counter
-	jr nz, .loop        ; Stop if C is zero, otherwise keep looping
+	ld hl, STARTOF(VRAM)
+	ld de, CompoTiles
+	COPY_2BPP Compo
 
-	ld d, HIGH(TILEMAP0)
+	ld h, HIGH(TILEMAP0)
 	call CopyRow
-	ld d, HIGH(TILEMAP1)
+	ld h, HIGH(TILEMAP1)
 	; Fall through
 
 CopyRow:
@@ -208,8 +200,8 @@ CopyRow:
 	; Fall through
 
 CopyHalfRow::
-	ld a, [hli]
-	ld [de], a
+	ld a, [de]
+	ld [hli], a
 	inc e
 	jr nz, CopyHalfRow
 	inc d
@@ -254,7 +246,7 @@ SetBank:
 	jr nz, .SGB
 
 .DMG
-	ld a, BANK(Tiles)
+	ld a, BANK(CompoTiles)
 	ld [rROMB0], a
 	ret
 
@@ -284,7 +276,7 @@ MACRO SEND_BIT
 ENDM
 
 InitSGB:
-	ld hl, TilesSGB.palette
+	ld hl, CompoPalette
 	; Fall through
 
 ; Adapted from https://github.com/gb-archive/snek-gbc/blob/main/code/sub.sm83
@@ -336,14 +328,9 @@ InitGBC::
 	ld a, OPRI_COORD
 	ldh [rOPRI], a
 	
-	; ld a, IEF_VBLANK
-	; ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
-	; xor a                      ; Set A to zero
-	; ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
-
 	rst WaitVBlank
 	ld hl, rBGPI
-	ld de, TilesGBC.palette
+	ld de, CompoPalette
 	call .do
 	inc l
 	; Fall through
@@ -362,17 +349,17 @@ InitGBC::
 
 
 SECTION "Tiles", ROMX[$4000], BANK[1]
-Tiles:
-.compo
+CompoTiles:
 	INCBIN "compo_logo.2bpp"
 	INCBIN "compo_text.2bpp"
 	INCBIN "compo_obj.2bpp"
-.compoMap
+.end
 	INCBIN "compo_logo.tilemap"
 	INCBIN "compo_text.tilemap"
-.compoObjMap
+CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
+CompoPalette:
 
 
 SECTION "TilesGBC", ROMX[$4000], BANK[3]
@@ -382,13 +369,13 @@ TilesGBC:
 	INCBIN "compo_button.2bpp"
 	INCBIN "compo_text.2bpp"
 	INCBIN "compo_obj.2bpp"
-.compoMap
+.end
 	INCBIN "compo_logo_gbc.tilemap"
 	INCBIN "compo_text.tilemap"
-.compoObjMap
+CompoObjMapGBC:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
-.palette
+CompoPaletteGBC:
 	dw cOffWhite
 	INCBIN "compo_logo_gbc.pal", 2, 6
 	INCBIN "compo_button_gbc.pal"
@@ -403,13 +390,13 @@ TilesGBA:
 	INCBIN "compo_button.2bpp"
 	INCBIN "compo_text.2bpp"
 	INCBIN "compo_obj.2bpp"
-.compoMap
+.end
 	INCBIN "compo_logo_gbc.tilemap"
 	INCBIN "compo_text.tilemap"
-.compoObjMap
+CompoObjMapGBA:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
-.palette
+CompoPaletteGBA:
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_button.pal"
@@ -424,13 +411,13 @@ TilesSGB:
 	ds 16
 	INCBIN "compo_text.2bpp"
 	INCBIN "compo_obj_sgb.2bpp"
-.compoMap
+.end
 	INCBIN "compo_logo_gbc.tilemap"
 	INCBIN "compo_text.tilemap"
-.compoObjMap
+CompoObjMapSGB:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
-.palette
+CompoPaletteSGB:
 	db SGB_PAL01 | $01
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6

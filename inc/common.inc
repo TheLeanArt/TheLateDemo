@@ -3,8 +3,10 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 
+; https://github.com/gbdev/hardware.inc/pull/75
 DEF BOOTUP_B_DMG0        EQU $FF
 
+; https://github.com/gbdev/hardware.inc/pull/77
 DEF SGB_PAL01            EQU $00 << 3
 
 DEF MAP_LOGO             EQU TILEMAP0
@@ -48,7 +50,7 @@ ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
 ENDM
 
-; @param \1 Page aligned Tiles prefix
+; @param \1 Page-aligned Tiles prefix
 MACRO COPY_2BPP
 ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	ld bc, HIGH(\1Tiles.end - \1Tiles) ; Clear B and set C to the page count
