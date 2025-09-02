@@ -9,10 +9,6 @@ DEF BOOTUP_B_DMG0        EQU $FF
 ; https://github.com/gbdev/hardware.inc/pull/77
 DEF SGB_PAL01            EQU $00 << 3
 
-DEF MAP_LOGO             EQU TILEMAP0
-DEF COL_LOGO             EQU   4
-DEF ROW_LOGO             EQU   8
-
 DEF B_FLAGS_SGB          EQU   0
 DEF B_FLAGS_GBA          EQU   0
 DEF B_FLAGS_GBC          EQU   1
