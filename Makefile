@@ -17,6 +17,7 @@ OBJS = \
 	src/intro/intro_lut.o \
 	src/compo.o \
 	src/oamdma.o \
+	src/sgb.o \
 	src/hUGEDriver.o \
 	src/song_ending.o \
 	
