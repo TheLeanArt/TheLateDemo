@@ -36,24 +36,9 @@ DEF cOffWhite    EQU %0_11111_10110_11011
 
 SECTION "Compo", ROM0
 
-Compo::	
-	ld a, %11100100     ; Default
-	ld hl, rBGP
-	ld [hli], a         ; Set background palette
-	ld [hli], a         ; Set object palette 0
-
-	ld a, %11000100     ; White
-	ld [hli], a         ; Set object palette 1
-
+Compo::
 	call SetBank
-
-	ldh a, [hFlags]
-	cp FLAGS_SGB
-	call z, InitSGB
-
-	ldh a, [hFlags]
-	bit B_FLAGS_GBC, a
-	call nz, InitGBC
+	call CompoInit
 
 	rst ScreenOff
 	ldh [hFrameCount], a
@@ -246,7 +231,19 @@ SetBank:
 	ret
 
 
-SECTION "InitSGB", ROM0
+SECTION "InitDMG", ROM0
+InitDMG:
+	ld a, %11100100     ; Default
+	ld hl, rBGP
+	ld [hli], a         ; Set background palette
+	ld [hli], a         ; Set object palette 0
+
+	ld a, %11000100     ; White
+	ld [hli], a         ; Set object palette 1
+	ret
+
+
+SECTION "InitSGB", ROMX, BANK[FLAGS_SGB]
 
 MACRO SEND_BIT
 	ldh [c], a          ; 5 cycles
@@ -256,7 +253,7 @@ MACRO SEND_BIT
 ENDM
 
 InitSGB:
-	ld hl, CompoPalette
+	ld hl, CompoPaletteSGB
 	; Fall through
 
 ; Adapted from https://github.com/gb-archive/snek-gbc/blob/main/code/sub.sm83
@@ -304,13 +301,13 @@ SGB_SendPacket:
 
 SECTION "InitGBC", ROM0
 
-InitGBC::
+InitGBC:
 	ld a, OPRI_COORD
 	ldh [rOPRI], a
 	
 	rst WaitVBlank
 	ld hl, rBGPI
-	ld de, CompoPalette
+	ld de, CompoPaletteGBC
 	call .do
 	inc l
 	; Fall through
@@ -339,12 +336,12 @@ CompoTiles:
 CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
-CompoPalette:
+CompoInit:
+	jp InitDMG
 
 
 SECTION "TilesGBC", ROMX[$4000], BANK[FLAGS_GBC]
-TilesGBC:
-.compo
+CompoTilesGBC:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
 	INCBIN "compo_text.2bpp"
@@ -355,6 +352,8 @@ TilesGBC:
 CompoObjMapGBC:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
+CompoInitGBC:
+	jp InitGBC
 CompoPaletteGBC:
 	dw cOffWhite
 	INCBIN "compo_logo_gbc.pal", 2, 6
@@ -364,8 +363,7 @@ CompoPaletteGBC:
 
 
 SECTION "TilesGBA", ROMX[$4000], BANK[FLAGS_GBA]
-TilesGBA:
-.compo
+CompoTilesGBA:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
 	INCBIN "compo_text.2bpp"
@@ -376,6 +374,8 @@ TilesGBA:
 CompoObjMapGBA:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
+CompoInitGBA:
+	jp InitGBC
 CompoPaletteGBA:
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
@@ -385,8 +385,7 @@ CompoPaletteGBA:
 
 
 SECTION "TilesSGB", ROMX[$4000], BANK[FLAGS_SGB]
-TilesSGB:
-.compo
+CompoTilesSGB:
 	INCBIN "compo_logo_sgb.2bpp"
 	ds 16
 	INCBIN "compo_text.2bpp"
@@ -397,6 +396,9 @@ TilesSGB:
 CompoObjMapSGB:
 	INCBIN "compo_obj.tilemap"
 	ds 8, 0
+CompoInitSGB:
+	call InitDMG
+	jp InitSGB
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
 	dw cOffWhiteSGB
