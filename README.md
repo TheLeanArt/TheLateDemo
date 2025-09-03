@@ -18,5 +18,5 @@ make
 
 [MIT License](LICENSE) with the following exception:
 
-* The music included in this demo may is
+* The music included in this demo is
   Copyright (c) 2025 Nikku4211. All rights reserved
