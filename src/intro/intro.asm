@@ -207,8 +207,9 @@ ENDR
 	ld a, X_INTRO_N2           ; Set the window's X coordinate
 	ldh [rWX], a               ; ...
 
-	ld hl, song_ending
-	call hUGE_init
+ASSERT (BANK(song_ending) == 1)
+	ld hl, song_ending         ; Load the song address into HL
+	call hUGE_init             ; Initialize song
 
 	ld e, 0                    ; Use E as our step counter
 .mainLoop
@@ -243,19 +244,15 @@ ENDR
 
 	call hFixedOAMDMA          ; Prevent lag
 
-	push bc
-	push de
-	push hl
-	call hUGE_dosound
-	pop hl
-	pop de
-	pop bc
+	push de                    ; Save the step counter
+	call hUGE_dosound          ; Play sound
+	pop de                     ; Restore the step counter
 
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jr z, .mainLoop            ; If not, continue to loop
 
-	jp Compo
+	jp Compo                   ; Proceed to compo animation
 
 
 SECTION "Intro Subroutines", ROM0
