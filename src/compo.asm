@@ -223,7 +223,7 @@ DoSound:
 
 SetBank:
 	ldh a, [hFlags]
-	or a
+	and FLAGS_MASK
 	jr nz, .cont
 	inc a
 .cont
