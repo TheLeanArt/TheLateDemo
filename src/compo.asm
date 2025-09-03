@@ -43,6 +43,9 @@ Compo::
 	rst ScreenOff
 	call CopyCompo
 
+	ld a, BANK(song_ending)
+	ld [rROMB0], a
+
 .compo0
 	xor a
 	ldh [hFrameCount], a
@@ -168,7 +171,9 @@ LoopCompo:
 	call hFixedOAMDMA
 
 .cont4
-	call DoSound
+	push de
+	call hUGE_dosound
+	pop de
 	jr .loop3
 
 CopyCompo:
@@ -179,6 +184,7 @@ CopyCompo:
 	ld h, HIGH(TILEMAP0)
 	call CopyRow
 	ld h, HIGH(TILEMAP1)
+	ld d, HIGH(CompoTextMap)
 	; Fall through
 
 CopyRow:
@@ -213,14 +219,6 @@ AddButtons:
 	ld a, pCompoBtn
 	ld [hli], a
 	ret
-
-DoSound:
-	ld a, BANK(song_ending)
-	ld [rROMB0], a
-	push de
-	call hUGE_dosound
-	pop de
-	; Fall through
 
 SetBank:
 	ldh a, [hFlags]
@@ -326,6 +324,13 @@ InitGBC:
 	ret
 
 
+SECTION "Common Compo Maps", ROM0, ALIGN[8]
+CompoTextMap:
+	INCBIN "compo_text.tilemap"
+CompoObjMap:
+	INCBIN "compo_obj.tilemap"
+
+
 SECTION "Tiles", ROMX[$4000], BANK[FLAGS_DMG0]
 CompoTiles:
 	INCBIN "compo_logo.2bpp"
@@ -333,10 +338,6 @@ CompoTiles:
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo.tilemap"
-	INCBIN "compo_text.tilemap"
-CompoObjMap:
-	INCBIN "compo_obj.tilemap"
-	ds 8, 0
 CompoInit:
 	jp InitDMG
 
@@ -349,10 +350,6 @@ CompoTilesGBC:
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-	INCBIN "compo_text.tilemap"
-CompoObjMapGBC:
-	INCBIN "compo_obj.tilemap"
-	ds 8, 0
 CompoInitGBC:
 	jp InitGBC
 CompoPaletteGBC:
@@ -371,10 +368,6 @@ CompoTilesGBA:
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-	INCBIN "compo_text.tilemap"
-CompoObjMapGBA:
-	INCBIN "compo_obj.tilemap"
-	ds 8, 0
 CompoInitGBA:
 	jp InitGBC
 CompoPaletteGBA:
@@ -393,10 +386,6 @@ CompoTilesSGB:
 	INCBIN "compo_obj_sgb.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-	INCBIN "compo_text.tilemap"
-CompoObjMapSGB:
-	INCBIN "compo_obj.tilemap"
-	ds 8, 0
 CompoInitSGB:
 	call InitDMG
 	jp InitSGB
