@@ -41,8 +41,11 @@ Compo::
 	call CompoInit
 
 	rst ScreenOff
-	ldh [hFrameCount], a
 	call CopyCompo
+
+.compo0
+	xor a
+	ldh [hFrameCount], a
 
 .copyObjs
 	ld bc, CompoObjMap
@@ -54,7 +57,7 @@ Compo::
 	ld a, [bc]
 	inc c
 	cp tCompoObj
-	jr z, .cont0
+	jr z, .cont
 	ld [hl], d
 	inc l
 	ld [hl], e
@@ -63,7 +66,7 @@ Compo::
 	xor a
 	ld [hli], a
 
-.cont0
+.cont
 	ld a, e
 	add TILE_WIDTH
 	ld e, a
@@ -75,6 +78,7 @@ Compo::
 	cp yCompoBottom
 	jr nz, .loop1
 	call AddButtons
+	call hFixedOAMDMA
 	inc l
 	ld e, l
 
@@ -103,10 +107,7 @@ Compo::
 	ld d, xCompoStop3
 	call LoopCompo
 
-	rst ScreenOff
-	ldh [hFrameCount], a
-	call DoSound
-	jr .copyObjs
+	jr .compo0
 
 
 SECTION "Compo Subroutines", ROM0
