@@ -3,6 +3,7 @@
 ; Copyright (c) 2023 zlago
 
 include "hardware.inc"
+include "common.inc"
 
 
 MACRO SEND_BIT
@@ -15,7 +16,7 @@ ENDM
 SECTION "SGB Routines", ROM0
 
 SGB_SendPacket::
-	ld bc, 16 << 8 | LOW(rP1)
+	ld bc, SGB_PACKET_SIZE << 8 | LOW(rP1)
 	xor a               ; start bit
 	SEND_BIT
 

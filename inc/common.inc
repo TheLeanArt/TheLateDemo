@@ -7,6 +7,7 @@
 DEF BOOTUP_B_DMG0        EQU $FF
 
 ; https://github.com/gbdev/hardware.inc/pull/77
+DEF SGB_PACKET_SIZE      EQU  16
 DEF SGB_PAL01            EQU $00 << 3
 
 DEF B_FLAGS_SGB          EQU   0
