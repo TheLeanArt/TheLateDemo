@@ -9,7 +9,7 @@ include "intro.inc"
 
 MACRO INTRO_META_INIT
 	ld hl, MAP_INTRO_\1 + ROW_INTRO_\1 * TILEMAP_WIDTH + COL_INTRO_\1
-	rst WaitVRAM
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, T_INTRO_\1           ; Load top left tile ID
 	ld [hli], a                ; Set top left tile and advance to the right
 	ld a, T_INTRO_\1 + 2       ; Load top right tile ID
@@ -295,7 +295,7 @@ ClearBackground:
 ClearLogo:
 	ld c, LOGO_WIDTH + 1       ; Clear ®
 .loop
-	rst WaitVRAM
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	xor a
 	ld [hli], a
 	dec c
@@ -303,22 +303,22 @@ ClearLogo:
 	ret
 
 ClearWindow:
-	ld hl, TILEMAP1 + 4
+	ld hl, TILEMAP1 + COL_LOGO
 	call ClearLogo
-	ld l, TILEMAP_WIDTH + 4
+	ld l, TILEMAP_WIDTH + COL_LOGO
 	jr ClearLogo
 
 SetWindow:
-	ld hl, TILEMAP1 + 4
+	ld hl, TILEMAP1 + COL_LOGO
 	ld b, T_LOGO
 	call .logo
-	ld l, TILEMAP_WIDTH + 4
+	ld l, TILEMAP_WIDTH + COL_LOGO
 	; Fall through
 
 .logo:
 	ld c, LOGO_WIDTH
 .loop
-	rst WaitVRAM
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld [hl], b
 	inc l
 	inc b
