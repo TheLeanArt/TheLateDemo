@@ -1,3 +1,8 @@
+; Copyright (c) 2025 Nikku4211
+;
+; All rights reserved
+
+
 include "hUGE.inc"
 
 SECTION "Ending Song Data", ROMX

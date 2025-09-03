@@ -18,4 +18,5 @@ make
 
 [MIT License](LICENSE) with the following exception:
 
-* The music included in this demo may not be reused without the written permission of the author (Nikku4211).
+* The music included in this demo may is
+  Copyright (c) 2025 Nikku4211. All rights reserved
