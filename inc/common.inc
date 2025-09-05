@@ -18,6 +18,8 @@ DEF FLAGS_GBA            EQU   1 << B_FLAGS_GBC | 1 << B_FLAGS_GBA
 DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
 DEF BANK_SGB             EQU   2
+DEF BANK_COMPO           EQU   3
+DEF BANK_MASK            EQU   4
 
 DEF cOffWhite            EQU %0_11111_10110_11011
 DEF cOffWhiteSGB         EQU %0_11111_11011_11100

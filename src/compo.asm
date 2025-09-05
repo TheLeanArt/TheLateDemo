@@ -36,13 +36,36 @@ SECTION "Compo", ROM0
 
 Compo::
 	call SetBank
-	call CompoInit
+
+	ldh a, [hFlags]
+	bit B_FLAGS_GBC, a
+	jr z, .nonGBC
+
+.GBC
+	call InitGBC
+	jr .cont0
+
+.nonGBC
+	call InitDMG
+	ldh a, [hFlags]
+	bit B_FLAGS_SGB, a
+	jr z, .cont0
+
+.SGB
+	call InitSGB
+
+.cont0
 	rst ScreenOff
 	call CopyCompo
-	call CompoPostInit
+
+	ldh a, [hFlags]
+	cp FLAGS_SGB
+	ld hl, UnfreezeSGB
+	call z, SGB_SendPacket
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
+	call hUGE_dosound
 
 .compo0
 	xor a
@@ -176,7 +199,11 @@ LoopCompo:
 
 CopyCompo:
 	ld hl, STARTOF(VRAM)
-	ld de, CompoTiles
+	ldh a, [hFlags]
+	or BANK_MASK
+	swap a
+	ld d, a
+	ld e, 0
 	COPY_2BPP Compo
 
 	ld h, HIGH(TILEMAP0)
@@ -219,17 +246,8 @@ AddButtons:
 	ld [hli], a
 	ret
 
-SetBank:
-	ldh a, [hFlags]
-	or a
-	jr nz, .cont
-	ld a, FLAGS_DMG0
-.cont
-	ld [rROMB0], a
-	ret
 
-
-SECTION "InitDMG", ROM0
+SECTION "InitDMG", ROMX, BANK[BANK_COMPO]
 InitDMG:
 	ld a, %11100100     ; Default
 	ld hl, rBGP
@@ -243,7 +261,6 @@ InitDMG:
 
 SECTION "InitSGB", ROM0
 InitSGB:
-	call InitDMG
 	call SGB_InitVRAM
 	call SetBankSGB
 	ld hl, FreezeSGB
@@ -259,16 +276,12 @@ InitSGB:
 	call SGB_CopyVRAM
 	ld hl, CompoPaletteSGB
 	call SGB_SendPacket
-	ld a, FLAGS_SGB
+	; Fall through
+
+SetBank:
+	ld a, BANK_COMPO
 	ld [rROMB0], a
 	ret
-
-
-SECTION "PostInitSGB", ROM0
-PostInitSGB:
-	call SetBankSGB
-	ld hl, UnfreezeSGB
-	jp SGB_SendPacket
 
 
 SECTION "DoSoundSGB", ROM0
@@ -288,7 +301,7 @@ SetBankSGB:
 	ret
 
 
-SECTION "InitGBC", ROM0
+SECTION "InitGBC", ROMX, BANK[BANK_COMPO]
 InitGBC:
 	ld a, OPRI_COORD
 	ldh [rOPRI], a
@@ -296,6 +309,12 @@ InitGBC:
 	rst WaitVBlank
 	ld hl, rBGPI
 	ld de, CompoPaletteGBC
+	ldh a, [hFlags]
+	bit B_FLAGS_GBA, a
+	jr z, .cont
+	ld de, CompoPaletteGBA
+
+.cont
 	call .do
 	inc l
 	; Fall through
@@ -320,20 +339,16 @@ CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 
 
-SECTION "Tiles", ROMX[$4000], BANK[FLAGS_DMG0]
+SECTION "Tiles", ROMX[$4000], BANK[BANK_COMPO]
 CompoTiles:
 	INCBIN "compo_logo.2bpp"
 	INCBIN "compo_text.2bpp"
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo.tilemap"
-CompoInit:
-	jp InitDMG
-CompoPostInit:
-	ret
 
 
-SECTION "TilesGBC", ROMX[$4000], BANK[FLAGS_GBC]
+SECTION "TilesGBC", ROMX[$6000], BANK[BANK_COMPO]
 CompoTilesGBC:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
@@ -341,10 +356,6 @@ CompoTilesGBC:
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-CompoInitGBC:
-	jp InitGBC
-CompoPostInitGBC:
-	ret
 CompoPaletteGBC:
 	dw cOffWhite
 	INCBIN "compo_logo_gbc.pal", 2, 6
@@ -353,7 +364,7 @@ CompoPaletteGBC:
 	INCBIN "compo_button_gbc.pal"
 
 
-SECTION "TilesGBA", ROMX[$4000], BANK[FLAGS_GBA]
+SECTION "TilesGBA", ROMX[$7000], BANK[BANK_COMPO]
 CompoTilesGBA:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
@@ -361,10 +372,6 @@ CompoTilesGBA:
 	INCBIN "compo_obj.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-CompoInitGBA:
-	jp InitGBC
-CompoPostInitGBA:
-	ret
 CompoPaletteGBA:
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
@@ -373,7 +380,7 @@ CompoPaletteGBA:
 	INCBIN "compo_button.pal"
 
 
-SECTION "TilesSGB", ROMX[$4000], BANK[FLAGS_SGB]
+SECTION "TilesSGB", ROMX[$5000], BANK[BANK_COMPO]
 CompoTilesSGB:
 	INCBIN "compo_logo_sgb.2bpp"
 	ds 16
@@ -381,10 +388,6 @@ CompoTilesSGB:
 	INCBIN "compo_obj_sgb.2bpp"
 .end
 	INCBIN "compo_logo_gbc.tilemap"
-CompoInitSGB:
-	jp InitSGB
-CompoPostInitSGB:
-	jp PostInitSGB
 
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
@@ -422,6 +425,9 @@ FreezeSGB:
 	db SGB_MASK_EN | $01
 	db SGB_MASK_EN_MASK_FREEZE
 	ds 14
+
+
+SECTION "UnfreezeSGB", ROMX, BANK[BANK_COMPO]
 UnfreezeSGB:
 	db SGB_MASK_EN | $01
 	db SGB_MASK_EN_MASK_CANCEL
