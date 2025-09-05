@@ -14,8 +14,7 @@ MACRO SEND_BIT
 	ldh [c], a          ; 15 cycles
 ENDM
 
-SECTION "SGB Routines", ROM0
-
+SECTION "SGB_SendPacket", ROM0
 SGB_SendPacket::
 	ld bc, SGB_PACKET_SIZE << 8 | LOW(rP1)
 	xor a               ; start bit
@@ -56,3 +55,58 @@ SGB_SendPacket::
 	ld a, JOYP_GET_CTRL_PAD
 	ldh [c], a
 	ret
+
+SECTION "SGB_CopyVRAM", ROM0
+SGB_CopyVRAM::
+	push hl
+	rst ScreenOff
+	ld hl, STARTOF(VRAM)
+	ld bc, $1000
+.copyLoop
+	ld a, [de]
+	ld [hli], a
+	inc e
+	dec c
+	jr nz, .copyLoop
+	inc d
+	dec b
+	jr nz, .copyLoop
+
+	call DoSoundSGB2
+
+	xor a
+	ldh [rSCX], a
+	ldh [rSCY], a
+	ld hl, TILEMAP0
+	ld b, SCREEN_HEIGHT
+	ld de, TILEMAP_WIDTH - SCREEN_WIDTH
+.rowLoop
+	ld c, SCREEN_WIDTH
+.columnLoop
+	ld [hli], a
+	inc a
+	dec c
+	jr nz, .columnLoop
+	add hl, de
+	dec b
+	jr nz, .rowLoop
+
+	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01
+	ldh [rLCDC], a
+	pop hl
+	call SGB_SendPacket
+
+	call DoSoundSGB2
+	; Fall through
+
+SGB_Wait4Frames:
+	call SGB_Wait2Frames
+	; Fall through
+
+SGB_Wait2Frames:
+	call SGB_Wait1Frame
+	; Fall through
+
+SGB_Wait1Frame:
+	halt
+	jp DoSoundSGB

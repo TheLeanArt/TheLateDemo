@@ -17,6 +17,8 @@ DEF FLAGS_GBC            EQU   1 << B_FLAGS_GBC
 DEF FLAGS_GBA            EQU   1 << B_FLAGS_GBC | 1 << B_FLAGS_GBA
 DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
+DEF BANK_SGB             EQU   2
+
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
