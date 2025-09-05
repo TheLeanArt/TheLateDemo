@@ -31,9 +31,6 @@ DEF xCompoStop1  EQU  -64
 DEF xCompoStop2  EQU   88
 DEF xCompoStop3  EQU   96
 
-DEF cOffWhiteSGB EQU %0_11111_11011_11100
-DEF cOffWhite    EQU %0_11111_10110_11011
-
 
 SECTION "Compo", ROM0
 

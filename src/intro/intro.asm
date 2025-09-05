@@ -3,6 +3,7 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 include "hardware.inc"
+include "sgb.inc"
 include "common.inc"
 include "intro.inc"
 
@@ -68,6 +69,7 @@ EntryPoint:
 	jr nz, .notSGB             ; If not, proceed to setting flags
 
 .SGB:
+	call SetPalettesSGB        ; Set SGB Palettes
 	ld b, FLAGS_SGB            ; Set flags to SGB
 	jr .setFlags               ; Proceed to setting flags
 
@@ -392,6 +394,19 @@ REPT 5
 ENDR
 	ld [hli], a
 	ret
+
+SetPalettesSGB:
+	ld hl, PaletteSGB
+	jp SGB_SendPacket
+
+PaletteSGB:
+	db SGB_PAL01 | $01
+	dw cOffWhiteSGB
+REPT 6
+	dw cBlack
+ENDR
+	db 0
+
 
 
 SECTION "Intro Flags", HRAM

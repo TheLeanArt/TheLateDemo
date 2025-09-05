@@ -19,6 +19,10 @@ DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
 DEF BANK_SGB             EQU   2
 
+DEF cOffWhite            EQU %0_11111_10110_11011
+DEF cOffWhiteSGB         EQU %0_11111_11011_11100
+DEF cBlack               EQU %0_00000_00000_00000
+
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
