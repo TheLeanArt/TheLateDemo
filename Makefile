@@ -60,10 +60,10 @@ COMPO_EXTRAS = \
 	art/compo/compo_logo_gbc.tilemap \
 	art/compo/compo_logo.pal \
 
-COMPO_BIN = \
-	art/compo/border/sgb_border_tiles.bin \
-	art/compo/border/sgb_border_map.bin \
-	art/compo/border/sgb_border_palettes.bin \
+COMPO_BORDER = \
+	art/compo/border/compo_border.2bpp \
+	art/compo/border/compo_border.tilemap \
+	art/compo/border/compo_border.pal \
 
 all: $(TARGET)
 
@@ -79,7 +79,7 @@ src/intro/intro.o: src/intro/intro.asm $(INC) $(INTRO_1BPP)
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
 
-src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BIN)
+src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 	$(RGBASM) $(RGBASMFLAGS) -I art/compo -I art/compo/border $< -o $@
 
 %.o: %.asm $(INC)

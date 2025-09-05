@@ -389,17 +389,17 @@ CompoPostInitSGB:
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
 BorderTilesSGB:
-	INCBIN "sgb_border_tiles.bin"
+	INCBIN "compo_border.2bpp"
 
 
 SECTION "BorderSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
 BorderSGB:
-	INCBIN "sgb_border_map.bin"
+	INCBIN "compo_border.tilemap"
 
 
 SECTION "BorderPalettesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
 BorderPalettesSGB:
-	INCBIN "sgb_border_palettes.bin"
+	INCBIN "compo_border.pal"
 
 
 SECTION "SGB Packets", ROMX, BANK[BANK_SGB], ALIGN[8]

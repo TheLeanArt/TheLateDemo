@@ -14,7 +14,7 @@ Music by Nikku4211.
 make
 ```
 
-*Note:* `sgb_border_*.bin` may be created from `sgb_border.png` using the [SGB Border Converter](https://www.marcrobledo.com/super-game-boy-border-converter/).
+*Note:* `compo_border.*` may be created from `compo_border.png` using the [SGB Border Converter](https://www.marcrobledo.com/super-game-boy-border-converter/).
 
 ## License
 
