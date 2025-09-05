@@ -14,6 +14,8 @@ Music by Nikku4211.
 make
 ```
 
+*Note:* `compo_border.*` may be created from `compo_border.png` using the [SGB Border Converter](https://www.marcrobledo.com/super-game-boy-border-converter/).
+
 ## License
 
 [MIT License](LICENSE) with the following exception:

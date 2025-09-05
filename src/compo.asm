@@ -37,9 +37,9 @@ SECTION "Compo", ROM0
 Compo::
 	call SetBank
 	call CompoInit
-
 	rst ScreenOff
 	call CopyCompo
+	call CompoPostInit
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
@@ -181,6 +181,7 @@ CopyCompo:
 
 	ld h, HIGH(TILEMAP0)
 	call CopyRow
+	CLEAR_LONG 1
 	ld h, HIGH(TILEMAP1)
 	ld d, HIGH(CompoTextMap)
 	; Fall through
@@ -240,8 +241,54 @@ InitDMG:
 	ret
 
 
-SECTION "InitGBC", ROM0
+SECTION "InitSGB", ROM0
+InitSGB:
+	call InitDMG
+	call SGB_InitVRAM
+	call SetBankSGB
+	ld hl, FreezeSGB
+	call SGB_SendPacket
+	ld de, BorderTilesSGB
+	ld hl, ChrTrn1SGB
+	call SGB_CopyVRAM
+	ld de, BorderSGB
+	ld hl, PctTrnSGB
+	call SGB_CopyVRAM
+	ld de, BorderPalettesSGB
+	ld hl, PalTrnSGB
+	call SGB_CopyVRAM
+	ld hl, CompoPaletteSGB
+	call SGB_SendPacket
+	ld a, FLAGS_SGB
+	ld [rROMB0], a
+	ret
 
+
+SECTION "PostInitSGB", ROM0
+PostInitSGB:
+	call SetBankSGB
+	ld hl, UnfreezeSGB
+	jp SGB_SendPacket
+
+
+SECTION "DoSoundSGB", ROM0
+DoSoundSGB2::
+	call DoSoundSGB
+	; Fall through
+
+DoSoundSGB::
+	ld a, BANK(song_ending)
+	ld [rROMB0], a
+	call hUGE_dosound
+	; Fall through
+
+SetBankSGB:
+	ld a, BANK_SGB
+	ld [rROMB0], a
+	ret
+
+
+SECTION "InitGBC", ROM0
 InitGBC:
 	ld a, OPRI_COORD
 	ldh [rOPRI], a
@@ -282,6 +329,8 @@ CompoTiles:
 	INCBIN "compo_logo.tilemap"
 CompoInit:
 	jp InitDMG
+CompoPostInit:
+	ret
 
 
 SECTION "TilesGBC", ROMX[$4000], BANK[FLAGS_GBC]
@@ -294,6 +343,8 @@ CompoTilesGBC:
 	INCBIN "compo_logo_gbc.tilemap"
 CompoInitGBC:
 	jp InitGBC
+CompoPostInitGBC:
+	ret
 CompoPaletteGBC:
 	dw cOffWhite
 	INCBIN "compo_logo_gbc.pal", 2, 6
@@ -312,6 +363,8 @@ CompoTilesGBA:
 	INCBIN "compo_logo_gbc.tilemap"
 CompoInitGBA:
 	jp InitGBC
+CompoPostInitGBA:
+	ret
 CompoPaletteGBA:
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
@@ -329,15 +382,50 @@ CompoTilesSGB:
 .end
 	INCBIN "compo_logo_gbc.tilemap"
 CompoInitSGB:
-	call InitDMG
-	ld hl, CompoPaletteSGB
-	jp SGB_SendPacket
+	jp InitSGB
+CompoPostInitSGB:
+	jp PostInitSGB
+
+
+SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+BorderTilesSGB:
+	INCBIN "compo_border.2bpp"
+
+
+SECTION "BorderSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+BorderSGB:
+	INCBIN "compo_border.tilemap"
+
+
+SECTION "BorderPalettesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+BorderPalettesSGB:
+	INCBIN "compo_border.pal"
+
+
+SECTION "SGB Packets", ROMX, BANK[BANK_SGB], ALIGN[8]
+ChrTrn1SGB:
+	db SGB_CHR_TRN | $01
+	ds 15, 0
+PctTrnSGB:
+	db SGB_PCT_TRN | $01
+	ds 15, 0
+PalTrnSGB:
+	db SGB_PAL_TRN | $01
+	ds 15, 0
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_obj.pal",  2, 6
 	db 0
+FreezeSGB:
+	db SGB_MASK_EN | $01
+	db SGB_MASK_EN_MASK_FREEZE
+	ds 14
+UnfreezeSGB:
+	db SGB_MASK_EN | $01
+	db SGB_MASK_EN_MASK_CANCEL
+	ds 14
 
 
 SECTION "HRAM", HRAM
