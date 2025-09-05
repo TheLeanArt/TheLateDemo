@@ -6,10 +6,6 @@
 ; https://github.com/gbdev/hardware.inc/pull/75
 DEF BOOTUP_B_DMG0        EQU $FF
 
-; https://github.com/gbdev/hardware.inc/pull/77
-DEF SGB_PACKET_SIZE      EQU  16
-DEF SGB_PAL01            EQU $00 << 3
-
 DEF B_FLAGS_SGB          EQU   0
 DEF B_FLAGS_GBA          EQU   0
 DEF B_FLAGS_GBC          EQU   1
@@ -25,7 +21,6 @@ DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
-; @param B  Zero
 ; @param \1 Page count
 MACRO CLEAR_LONG
 	xor a               ; Clear the A register

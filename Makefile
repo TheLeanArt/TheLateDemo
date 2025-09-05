@@ -20,9 +20,10 @@ OBJS = \
 	src/sgb.o \
 	src/hUGEDriver.o \
 	src/song_ending.o \
-	
+
 INC = \
 	inc/hardware.inc \
+	inc/sgb.inc \
 	inc/common.inc \
 
 INTRO_INC = \

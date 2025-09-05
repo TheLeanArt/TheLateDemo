@@ -3,6 +3,7 @@
 ; Copyright (c) 2023 zlago
 
 include "hardware.inc"
+include "sgb.inc"
 include "common.inc"
 
 
