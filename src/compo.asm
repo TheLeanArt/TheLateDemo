@@ -222,7 +222,7 @@ AddButtons:
 
 SetBank:
 	ldh a, [hFlags]
-	and FLAGS_MASK
+	or a
 	jr nz, .cont
 	inc a
 .cont
