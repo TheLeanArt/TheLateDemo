@@ -389,7 +389,7 @@ CompoPostInitSGB:
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
 BorderTilesSGB:
-	INCBIN "compo_border.2bpp"
+	INCBIN "compo_border.4bpp"
 
 
 SECTION "BorderSGB", ROMX, BANK[BANK_SGB], ALIGN[8]

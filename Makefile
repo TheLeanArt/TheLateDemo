@@ -61,7 +61,7 @@ COMPO_EXTRAS = \
 	art/compo/compo_logo.pal \
 
 COMPO_BORDER = \
-	art/compo/border/compo_border.2bpp \
+	art/compo/border/compo_border.4bpp \
 	art/compo/border/compo_border.tilemap \
 	art/compo/border/compo_border.pal \
 
