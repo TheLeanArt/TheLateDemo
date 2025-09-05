@@ -224,7 +224,7 @@ SetBank:
 	ldh a, [hFlags]
 	or a
 	jr nz, .cont
-	inc a
+	ld a, FLAGS_DMG0
 .cont
 	ld [rROMB0], a
 	ret
