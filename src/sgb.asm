@@ -56,6 +56,33 @@ SGB_SendPacket::
 	ldh [c], a
 	ret
 
+
+SECTION "SGB_InitVRAM", ROM0
+SGB_InitVRAM::
+	rst ScreenOff
+	ldh [rSCX], a
+	ldh [rSCY], a
+	ld hl, TILEMAP0
+	ld b, SCREEN_HEIGHT
+	ld de, TILEMAP_WIDTH - SCREEN_WIDTH
+.rowLoop
+	ld c, SCREEN_WIDTH
+.columnLoop
+	ld [hli], a
+	inc a
+	dec c
+	jr nz, .columnLoop
+	add hl, de
+	dec b
+	jr nz, .rowLoop
+	; Fall through
+
+ScreenOn:
+	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01
+	ldh [rLCDC], a
+	ret
+
+
 SECTION "SGB_CopyVRAM", ROM0
 SGB_CopyVRAM::
 	push hl
@@ -74,25 +101,7 @@ SGB_CopyVRAM::
 
 	call DoSoundSGB2
 
-	xor a
-	ldh [rSCX], a
-	ldh [rSCY], a
-	ld hl, TILEMAP0
-	ld b, SCREEN_HEIGHT
-	ld de, TILEMAP_WIDTH - SCREEN_WIDTH
-.rowLoop
-	ld c, SCREEN_WIDTH
-.columnLoop
-	ld [hli], a
-	inc a
-	dec c
-	jr nz, .columnLoop
-	add hl, de
-	dec b
-	jr nz, .rowLoop
-
-	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01
-	ldh [rLCDC], a
+	call ScreenOn
 	pop hl
 	call SGB_SendPacket
 

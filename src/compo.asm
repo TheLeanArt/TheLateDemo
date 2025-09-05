@@ -247,6 +247,7 @@ InitDMG:
 SECTION "InitSGB", ROM0
 InitSGB:
 	call InitDMG
+	call SGB_InitVRAM
 	call SetBankSGB
 	ld hl, FreezeSGB
 	call SGB_SendPacket
