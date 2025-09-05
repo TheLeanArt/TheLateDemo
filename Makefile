@@ -4,8 +4,9 @@ RGBASM  = rgbasm
 RGBGFX  = rgbgfx
 
 TITLE = THELATEDEMO
-TARGET = latedemo.gbc
-SYM = latedemo.sym
+VER = 2.0
+TARGET = latedemo_$(VER).gbc
+SYM = latedemo_$(VER).sym
 
 RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -m MBC1 -t $(TITLE) -c --sgb-compatible --old-licensee 0x33
