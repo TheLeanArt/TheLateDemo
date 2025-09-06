@@ -12,6 +12,12 @@ RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -m MBC1 -t $(TITLE) -c --sgb-compatible --old-licensee 0x33
 RGBASMFLAGS  = -I inc -I art -I art/intro
 
+RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border -DT_COMPO_BTN=$(T_COMPO_BTN) -DT_COMPO_OBJ=$(T_COMPO_OBJ)
+
+T_COMPO_BTN = 3F
+T_COMPO_TXT = 40
+T_COMPO_OBJ = B0
+
 OBJS = \
 	src/intro/intro.o \
 	src/intro/intro_drop.o \
@@ -81,7 +87,7 @@ src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
 
 src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
-	$(RGBASM) $(RGBASMFLAGS) -I art/compo -I art/compo/border $< -o $@
+	$(RGBASM) $(RGBASMFLAGS_COMPO) $< -o $@
 
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
@@ -99,10 +105,10 @@ art/compo/compo_button.2bpp: art/compo/compo_button.png
 	$(RGBGFX) -u $< -o $@ -P
 
 art/compo/compo_text.2bpp: art/compo/compo_text.png
-	$(RGBGFX) -u $< -o $@ -T -b 0x40
+	$(RGBGFX) -u $< -o $@ -T -b 0x$(T_COMPO_TXT)
 
 art/compo/compo_obj.2bpp: art/compo/compo_obj.png
-	$(RGBGFX) -u $< -o $@ -T -P -b 0xB0
+	$(RGBGFX) -u $< -o $@ -T -P -b 0x$(T_COMPO_OBJ)
 
 art/compo/%.2bpp: art/compo/%.png
 	$(RGBGFX) -u $< -o $@

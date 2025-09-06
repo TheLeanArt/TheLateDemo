@@ -7,13 +7,13 @@ include "sgb.inc"
 include "common.inc"
 
 
-DEF tCompoBtn    EQU  $3F
+DEF tCompoBtn    EQUS "${T_COMPO_BTN}"
 DEF pCompoBtn    EQU    1
 DEF yCompoBtn    EQU  107
 DEF xCompoBtn1   EQU  187
 DEF xCompoBtn2   EQU  196
 
-DEF tCompoObj    EQU  $B0
+DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
 DEF vCompoObj    EQU   35
 
 DEF yCompoObj    EQU   32
