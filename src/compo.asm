@@ -16,7 +16,7 @@ DEF xCompoBtn2   EQU  196
 DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
 DEF vCompoObj    EQU   35
 
-DEF tCompoEmpty  EQU  $90
+DEF tCompoEmpty  EQU  $70
 
 DEF yCompoObj    EQU   32
 DEF xCompoObj    EQU  183
@@ -201,51 +201,68 @@ LoopCompo:
 
 CopyCompo:
 	ld hl, STARTOF(VRAM)
-	ld bc, HIGH(CompoTiles) << 8 | HIGH(CompoTiles.end - CompoTiles)
-	call CopyCompoTiles
-	ld de, CompoTextTiles
-	ld bc, HIGH(CompoTextTiles.end - CompoTextTiles)
-	call CopyTiles
-	ld bc, HIGH(CompoObjTiles) << 8 | HIGH(CompoObjTiles.end - CompoObjTiles)
-	call CopyCompoTiles
-	ld h, HIGH(TILEMAP0)
-	call CopyRow
-	CLEAR_LONG 1
-	ld h, HIGH(TILEMAP1)
-	ld d, HIGH(CompoTextMap)
-	; Fall through
-
-CopyRow:
-	call CopyHalfRow
-	; Fall through
-
-CopyHalfRow::
-	ld a, [de]
-	ld [hli], a
-	inc e
-	jr nz, CopyHalfRow
-	inc d
-	ret
-
-CopyCompoTiles:
+	ld bc, CompoTiles.end - CompoTiles
 	ldh a, [hFlags]
 	and FLAGS_MASK
-	swap a
-	rrca
-	add b
-	ld b, 0
+	add a
+	add a
+	add HIGH(CompoTiles)
 	ld d, a
 	ld e, 0
+	call MemCopy
+
+.text
+	ld de, CompoTextTiles
+	ld bc, CompoTextTiles.end - CompoTextTiles
+	call MemCopy
+
+.obj
+	ld de, CompoObjTiles
+	ldh a, [hFlags]
+	bit B_FLAGS_SGB, a
+	jr z, .objCont
+	ld de, CompoObjTilesSGB
+.objCont
+	ld bc, CompoObjTiles.end - CompoObjTiles
+	call MemCopy
+
+.map
+	ld de, CompoLogoMap
+	ldh a, [hFlags]
+	and FLAGS_GBC | FLAGS_SGB
+	jr z, .mapCont
+	ld de, CompoLogoMapGBC
+.mapCont
+	ld b, HIGH(CompoLogoMap.end - CompoLogoMap)
+	ld hl, TILEMAP0
+	call MemCopyAndClear
+
+.textMap
+	ld h, HIGH(TILEMAP1)
+	ld d, HIGH(CompoTextMap)
+	ld b, HIGH(CompoTextMap.end - CompoTextMap)
 	; Fall through
 
-CopyTiles:
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to
-	inc de              ; Increment the source pointer in DE
-	dec b               ; Decrement the inner loop counter
-	jr nz, CopyTiles    ; Stop if B is zero, otherwise keep looping
-	dec c               ; Decrement the outer loop counter
-	jr nz, CopyTiles    ; Stop if C is zero, otherwise keep looping
+; Adapted from Simple GB ASM Examples by Dave VanEe
+; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+
+MemCopy::
+	ld a, [de]          ; Load a byte from the address DE points to into the register A
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	inc de              ; Increment the destination pointer in DE
+	dec bc              ; Decrement the loop counter in BC
+	ld a, b             ; Load the value in B into A
+	or c                ; Logical OR the value in A (from B) with C
+	jr nz, MemCopy      ; If B and C are both zero, OR B will be zero, otherwise keep looping
+	ret
+
+MemCopyAndClear::
+	call MemCopy        ; Copy memory
+	xor a               ; Clear the A register
+.loop
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	dec c               ; Decrement the loop counter
+	jr nz, .loop        ; Stop if C is zero, otherwise keep looping
 	ret
 
 AddButtons:
@@ -288,12 +305,12 @@ InitSGB:
 	call SetBankSGB
 	ld hl, FreezeSGB
 	call SGB_SendPacket
+	ld bc, BorderTilesSGB.end - BorderTilesSGB
 	ld de, BorderTilesSGB
-	ld hl, ChrTrn1SGB
-	call SGB_CopyVRAM
+	call SGB_SendBorderTiles
+	ld bc, BorderSGB.end - BorderSGB
 	ld de, BorderSGB
-	ld hl, PctTrnSGB
-	call SGB_CopyVRAM
+	call SGB_SendBorder
 	call ClearVRAM
 	ld hl, CompoPaletteSGB
 	call SGB_SendPacket
@@ -367,17 +384,6 @@ InitGBC:
 SECTION "CompoObjMap", ROMX, BANK[BANK_INIT], ALIGN[8]
 CompoObjMap:
 	INCBIN "compo_obj.tilemap"
-
-
-SECTION "CompoTextMap", ROMX, BANK[BANK_COMPO], ALIGN[8]
-CompoTextMap:
-	INCBIN "compo_text.tilemap"
-
-
-SECTION "CompoText", ROMX, BANK[BANK_COMPO], ALIGN[8]
-CompoTextTiles:
-	INCBIN "compo_text.2bpp"
-	ds 256 - LOW(@)
 .end
 
 
@@ -387,35 +393,53 @@ CompoTiles:
 .end
 
 
-SECTION "CompoObjTiles", ROMX[$4400], BANK[BANK_COMPO]
-CompoObjTiles:
-	INCBIN "compo_obj.2bpp"
-	ds 256 - LOW(@)
-.end
-	INCBIN "compo_logo.tilemap"
-
-
-SECTION "CompoTilesSGB", ROMX[$4800], BANK[BANK_COMPO]
+SECTION "CompoTilesSGB", ROMX[$4400], BANK[BANK_COMPO]
 CompoTilesSGB:
 	INCBIN "compo_logo_sgb.2bpp"
+.end
 
 
-SECTION "CompoObjTilesSGB", ROMX[$4C00], BANK[BANK_COMPO]
-	INCBIN "compo_obj_sgb.2bpp"
-	ds 256 - LOW(@)
-	INCBIN "compo_logo_gbc.tilemap"
-
-
-SECTION "CompoTilesGBC", ROMX[$5000], BANK[BANK_COMPO]
+SECTION "CompoTilesGBC", ROMX[$4800], BANK[BANK_COMPO]
 CompoTilesGBC:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
+.end
 
 
-SECTION "CompoObjTilesGBC", ROMX[$5400], BANK[BANK_COMPO]
+SECTION "CompoTextTiles", ROMX, BANK[BANK_COMPO]
+CompoTextTiles:
+	INCBIN "compo_text.2bpp"
+.end
+
+
+SECTION "CompoObjTiles", ROMX, BANK[BANK_COMPO]
+CompoObjTiles:
 	INCBIN "compo_obj.2bpp"
-	ds 256 - LOW(@)
+.end
+
+
+SECTION "CompoObjTilesSGB", ROMX, BANK[BANK_COMPO]
+CompoObjTilesSGB:
+	INCBIN "compo_obj_sgb.2bpp"
+.end
+
+
+SECTION "CompoLogoMap", ROMX, BANK[BANK_COMPO]
+CompoLogoMap:
+	INCBIN "compo_logo.tilemap"
+.end
+
+
+SECTION "CompoLogoMapGBC", ROMX, BANK[BANK_COMPO]
+CompoLogoMapGBC:
 	INCBIN "compo_logo_gbc.tilemap"
+.end
+
+
+SECTION "CompoTextMap", ROMX, BANK[BANK_COMPO]
+CompoTextMap:
+	INCBIN "compo_text.tilemap"
+.end
 
 
 SECTION "CompoPaletteGBC", ROMX, BANK[BANK_COMPO]
@@ -436,26 +460,21 @@ CompoPaletteGBA:
 	INCBIN "compo_button.pal"
 
 
-SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO], ALIGN[8]
+SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO]
 BorderTilesSGB:
 	INCBIN "compo_border.4bpp"
-
-
-SECTION "BorderSGB", ROMX, BANK[BANK_COMPO], ALIGN[8]
-BorderSGB:
-	INCBIN "compo_border.tilemap"
-	ds 256, 0
-	dw cOffWhiteSGB
-	INCBIN "compo_border.pal", 2
-
-
-SECTION "ChrTrn1SGB", ROMX, BANK[BANK_COMPO]
+.end
 ChrTrn1SGB:
 	db SGB_CHR_TRN | $01
 	ds 15, 0
 
 
-SECTION "PctTrnSGB", ROMX, BANK[BANK_COMPO]
+SECTION "BorderSGB", ROMX, BANK[BANK_COMPO]
+BorderSGB:
+	INCBIN "compo_border.tilemap"
+.end
+	dw cOffWhiteSGB
+	INCBIN "compo_border.pal", 2
 PctTrnSGB:
 	db SGB_PCT_TRN | $01
 	ds 15, 0

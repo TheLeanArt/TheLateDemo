@@ -16,7 +16,7 @@ RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border -DT_COMPO_BT
 
 T_COMPO_BTN = 3F
 T_COMPO_TXT = 40
-T_COMPO_OBJ = B0
+T_COMPO_OBJ = A9
 
 OBJS = \
 	src/intro/intro.o \

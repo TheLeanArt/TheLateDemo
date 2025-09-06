@@ -83,28 +83,32 @@ ScreenOn:
 	ret
 
 
-SECTION "SGB_CopyVRAM", ROM0
-SGB_CopyVRAM::
-	push hl
+SECTION "SGB_SendBorder", ROM0
+SGB_SendBorder::
 	rst ScreenOff
 	ld hl, STARTOF(VRAM)
-	ld bc, $1000
-.copyLoop
+	call MemCopyAndClear
+	ld b, 32
+.loop
 	ld a, [de]
 	ld [hli], a
-	inc e
-	dec c
-	jr nz, .copyLoop
-	inc d
+	inc de
 	dec b
-	jr nz, .copyLoop
+	jr nz, .loop
+	jr SGB_SendBorderTiles.cont
 
+
+SGB_SendBorderTiles::
+	rst ScreenOff
+	ld hl, STARTOF(VRAM)
+	call MemCopy
+
+.cont
+	push de
 	call DoSoundSGB2
-
 	call ScreenOn
 	pop hl
 	call SGB_SendPacket
-
 	call DoSoundSGB2
 	; Fall through
 

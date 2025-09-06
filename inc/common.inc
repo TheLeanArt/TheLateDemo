@@ -30,18 +30,6 @@ DEF cBlack               EQU %0_00000_00000_00000
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
-; @param \1 Page count
-MACRO CLEAR_LONG
-	xor a               ; Clear the A register
-	ld bc, \1           ; Clear B and set C to the page count
-.loop\@
-	ld [hli], a         ; Load the byte in the A register to the address HL points to
-	dec b               ; Decrement the inner loop counter
-	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
-	dec c               ; Decrement the outer loop counter
-	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
-ENDM
-
 ; @param \1 Page-aligned Tiles prefix
 MACRO COPY_1BPP_SAFE
 ASSERT(HIGH(\1Tiles.end - \1Tiles))
