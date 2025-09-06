@@ -308,16 +308,15 @@ SetBank:
 
 SECTION "ClearVRAM", ROM0
 ClearVRAM:
-	ld hl, STARTOF(VRAM)
+	ld hl, TILEMAP0
 .loop
-	xor a
+	rst WaitVRAM
+	ld a, 2
 	ld [hli], a
-	bit 5, l
+	bit 2, h
 	jr z, .loop
-	ret
+	; Fall through
 
-
-SECTION "DoSoundSGB", ROM0
 DoSoundSGB2::
 	call DoSoundSGB
 	; Fall through
@@ -329,7 +328,7 @@ DoSoundSGB::
 	; Fall through
 
 SetBankSGB:
-	ld a, BANK_SGB
+	ld a, BANK_COMPO
 	ld [rROMB0], a
 	ret
 
@@ -437,22 +436,22 @@ CompoPaletteGBA:
 	INCBIN "compo_button.pal"
 
 
-SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO], ALIGN[8]
 BorderTilesSGB:
 	INCBIN "compo_border.4bpp"
 
 
-SECTION "BorderSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+SECTION "BorderSGB", ROMX, BANK[BANK_COMPO], ALIGN[8]
 BorderSGB:
 	INCBIN "compo_border.tilemap"
 
 
-SECTION "BorderPalettesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]
+SECTION "BorderPalettesSGB", ROMX[$6000], BANK[BANK_COMPO]
 BorderPalettesSGB:
 	INCBIN "compo_border.pal"
 
 
-SECTION "SGB Packets", ROMX, BANK[BANK_SGB], ALIGN[8]
+SECTION "SGB Packets", ROMX, BANK[BANK_COMPO], ALIGN[8]
 ChrTrn1SGB:
 	db SGB_CHR_TRN | $01
 	ds 15, 0
