@@ -48,7 +48,9 @@ Compo::
 	jr .cont0
 
 .nonGBC
-	call InitDMG
+	ld a, %11_10_01_00  ; Default
+	ld [rBGP], a        ; Set the background palette
+	ld [rOBP0], a       ; Set the default object palette
 	ldh a, [hFlags]
 	bit B_FLAGS_SGB, a
 	jr z, .cont0
@@ -284,18 +286,6 @@ AddButtons:
 	ld [hli], a
 	ld a, pCompoBtn
 	ld [hli], a
-	ret
-
-
-SECTION "InitDMG", ROMX, BANK[BANK_COMPO]
-InitDMG:
-	ld a, %11100100     ; Default
-	ld hl, rBGP
-	ld [hli], a         ; Set background palette
-	ld [hli], a         ; Set object palette 0
-
-	ld a, %11000100     ; White
-	ld [hli], a         ; Set object palette 1
 	ret
 
 
