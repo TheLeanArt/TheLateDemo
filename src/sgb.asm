@@ -105,11 +105,11 @@ SGB_SendBorderTiles::
 
 .cont
 	push de
-	call DoSoundSGB2
+	call DoSound2
 	call ScreenOn
 	pop hl
 	call SGB_SendPacket
-	call DoSoundSGB2
+	call DoSound2
 	; Fall through
 
 SGB_Wait4Frames:
@@ -122,4 +122,4 @@ SGB_Wait2Frames:
 
 SGB_Wait1Frame:
 	halt
-	jp DoSoundSGB
+	jp DoSound

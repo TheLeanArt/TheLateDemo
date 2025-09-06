@@ -302,7 +302,6 @@ InitDMG:
 SECTION "InitSGB", ROM0
 InitSGB:
 	call SGB_InitVRAM
-	call SetBankSGB
 	ld hl, FreezeSGB
 	call SGB_SendPacket
 	ld bc, BorderTilesSGB.end - BorderTilesSGB
@@ -314,15 +313,8 @@ InitSGB:
 	call ClearVRAM
 	ld hl, CompoPaletteSGB
 	call SGB_SendPacket
-	; Fall through
+	jr SetBank
 
-SetBank:
-	ld a, BANK_COMPO
-	ld [rROMB0], a
-	ret
-
-
-SECTION "ClearVRAM", ROM0
 ClearVRAM:
 	ld hl, TILEMAP0
 .loop
@@ -331,53 +323,55 @@ ClearVRAM:
 	ld [hli], a
 	bit 2, h
 	jr z, .loop
-	call DoSoundSGB2
 	; Fall through
 
-DoSoundSGB2::
-	call DoSoundSGB
+DoSound4::
+	call DoSound2
 	; Fall through
 
-DoSoundSGB::
+DoSound2::
+	call DoSound
+	; Fall through
+
+DoSound::
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
 	call hUGE_dosound
 	; Fall through
 
-SetBankSGB:
+SetBank:
 	ld a, BANK_COMPO
 	ld [rROMB0], a
 	ret
 
 
-SECTION "InitGBC", ROMX, BANK[BANK_COMPO]
 InitGBC:
-	ld a, OPRI_COORD
-	ldh [rOPRI], a
-	
 	rst WaitVBlank
-	ld hl, rBGPI
-	ld de, CompoPaletteGBC
+	ld c, LOW(rBGPI)
+	ld hl, CompoPaletteGBC
 	ldh a, [hFlags]
 	bit B_FLAGS_GBA, a
 	jr z, .cont
-	ld de, CompoPaletteGBA
+	ld hl, CompoPaletteGBA
 
 .cont
 	call .do
-	inc l
-	; Fall through
+	call .do
+	ld a, OPRI_COORD
+	ldh [c], a
+	jr DoSound2
 
 .do
 	ld a, BGPI_AUTOINC
-	ld [hli], a
+	ldh [c], a
+	inc c
 	ld b, 16
 .loop
-	ld a, [de]
-	ld [hl], a
-	inc e
+	ld a, [hli]
+	ldh [c], a
 	dec b
 	jr nz, .loop
+	inc c
 	ret
 
 
