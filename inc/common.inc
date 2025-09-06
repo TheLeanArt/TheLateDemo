@@ -30,6 +30,22 @@ DEF cBlack               EQU %0_00000_00000_00000
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
+; @param \1 Tiles prefix
+MACRO COPY_0_5BPP_SAFE
+	ld bc, \1Tiles.end - \1Tiles ; Set BC to the byte count
+.loop\@
+	rst WaitVRAM        ; Wait for VRAM to become accessible
+	ld a, [de]          ; Load a byte from the address DE points to into the A register
+REPT 4
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+ENDR
+	inc de              ; Increment the source pointer in DE
+	dec bc              ; Decrement the loop counter in BC
+	ld a, b             ; Load the value in B into A
+	or c                ; Logical OR the value in A (from B) with C
+	jr nz, .loop\@      ; If B and C are both zero, OR B will be zero, otherwise keep looping
+ENDM
+
 ; @param \1 Page-aligned Tiles prefix
 MACRO COPY_1BPP_SAFE
 ASSERT(HIGH(\1Tiles.end - \1Tiles))
@@ -37,7 +53,7 @@ ASSERT(HIGH(\1Tiles.end - \1Tiles))
 .loop\@
 	rst WaitVRAM        ; Wait for VRAM to become accessible
 	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
 	ld [hli], a         ; Repeat for the second bitplane
 	inc de              ; Increment the source pointer in DE
 	dec b               ; Decrement the inner loop counter
@@ -52,7 +68,7 @@ ASSERT(HIGH(\1Tiles.end - \1Tiles))
 	ld bc, HIGH(\1Tiles.end - \1Tiles) ; Clear B and set C to the page count
 .loop\@
 	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
 	inc de              ; Increment the source pointer in DE
 	dec b               ; Decrement the inner loop counter
 	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
