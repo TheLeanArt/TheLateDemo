@@ -45,7 +45,6 @@ Compo::
 
 .GBC
 	call InitGBC
-	jr .cont0
 
 .nonGBC
 	ld a, %11_10_01_00  ; Default
@@ -206,6 +205,10 @@ CopyCompo:
 	ld bc, CompoTiles.end - CompoTiles
 	ldh a, [hFlags]
 	and FLAGS_MASK
+	cp FLAGS_MASK
+	jr nz, .cont
+	dec a
+.cont
 	add a
 	add a
 	add HIGH(CompoTiles)

@@ -69,11 +69,10 @@ EntryPoint:
 	set B_FLAGS_GBC, d         ; Set the GBC flag
 	ld a, b                    ; Load the initial value of B into A
 	cp BOOTUP_B_AGB            ; Are we running on GBA?
-	jr nz, .setFlags           ; If not, proceed to setting flags
+	jr nz, .cont               ; If not, proceed
 
 .GBA:
 	set B_FLAGS_GBA, d         ; Set the GBA flag
-	jr .setFlags               ; Proceed to setting flags
 
 .cont:
 	ld a, c                    ; Load the initial value of C into A
