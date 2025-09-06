@@ -13,7 +13,7 @@ DEF yCompoBtn    EQU  107
 DEF xCompoBtn1   EQU  187
 DEF xCompoBtn2   EQU  196
 
-DEF tCompoObj    EQU  $A9
+DEF tCompoObj    EQU  $B0
 DEF vCompoObj    EQU   35
 
 DEF yCompoObj    EQU   32
@@ -199,13 +199,13 @@ LoopCompo:
 
 CopyCompo:
 	ld hl, STARTOF(VRAM)
-	ldh a, [hFlags]
-	or BANK_MASK
-	swap a
-	ld d, a
-	ld e, 0
-	COPY_2BPP Compo
-
+	ld bc, HIGH(CompoTiles) << 8 | HIGH(CompoTiles.end - CompoTiles)
+	call CopyCompoTiles
+	ld de, CompoTextTiles
+	ld bc, HIGH(CompoTextTiles.end - CompoTextTiles)
+	call CopyTiles
+	ld bc, HIGH(CompoObjTiles) << 8 | HIGH(CompoObjTiles.end - CompoObjTiles)
+	call CopyCompoTiles
 	ld h, HIGH(TILEMAP0)
 	call CopyRow
 	CLEAR_LONG 1
@@ -223,6 +223,27 @@ CopyHalfRow::
 	inc e
 	jr nz, CopyHalfRow
 	inc d
+	ret
+
+CopyCompoTiles:
+	ldh a, [hFlags]
+	and FLAGS_MASK
+	swap a
+	rrca
+	add b
+	ld b, 0
+	ld d, a
+	ld e, 0
+	; Fall through
+
+CopyTiles:
+	ld a, [de]          ; Load a byte from the address DE points to into the A register
+	ld [hli], a         ; Load the byte in the A register to the address HL points to
+	inc de              ; Increment the source pointer in DE
+	dec b               ; Decrement the inner loop counter
+	jr nz, CopyTiles    ; Stop if B is zero, otherwise keep looping
+	dec c               ; Decrement the outer loop counter
+	jr nz, CopyTiles    ; Stop if C is zero, otherwise keep looping
 	ret
 
 AddButtons:
@@ -332,30 +353,61 @@ InitGBC:
 	ret
 
 
-SECTION "Common Compo Maps", ROM0, ALIGN[8]
-CompoTextMap:
-	INCBIN "compo_text.tilemap"
+SECTION "CompoObjMap", ROMX, BANK[BANK_INIT], ALIGN[8]
 CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 
 
-SECTION "Tiles", ROMX[$4000], BANK[BANK_COMPO]
+SECTION "CompoTextMap", ROMX, BANK[BANK_COMPO], ALIGN[8]
+CompoTextMap:
+	INCBIN "compo_text.tilemap"
+
+
+SECTION "CompoText", ROMX, BANK[BANK_COMPO], ALIGN[8]
+CompoTextTiles:
+	INCBIN "compo_text.2bpp"
+	ds 256 - LOW(@)
+.end
+
+
+SECTION "CompoTiles", ROMX[$4000], BANK[BANK_COMPO]
 CompoTiles:
 	INCBIN "compo_logo.2bpp"
-	INCBIN "compo_text.2bpp"
+.end
+
+
+SECTION "CompoObjTiles", ROMX[$4400], BANK[BANK_COMPO]
+CompoObjTiles:
 	INCBIN "compo_obj.2bpp"
+	ds 256 - LOW(@)
 .end
 	INCBIN "compo_logo.tilemap"
 
 
-SECTION "TilesGBC", ROMX[$6000], BANK[BANK_COMPO]
+SECTION "CompoTilesSGB", ROMX[$4800], BANK[BANK_COMPO]
+CompoTilesSGB:
+	INCBIN "compo_logo_sgb.2bpp"
+
+
+SECTION "CompoObjTilesSGB", ROMX[$4C00], BANK[BANK_COMPO]
+	INCBIN "compo_obj_sgb.2bpp"
+	ds 256 - LOW(@)
+	INCBIN "compo_logo_gbc.tilemap"
+
+
+SECTION "CompoTilesGBC", ROMX[$5000], BANK[BANK_COMPO]
 CompoTilesGBC:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
-	INCBIN "compo_text.2bpp"
+
+
+SECTION "CompoObjTilesGBC", ROMX[$5400], BANK[BANK_COMPO]
 	INCBIN "compo_obj.2bpp"
-.end
+	ds 256 - LOW(@)
 	INCBIN "compo_logo_gbc.tilemap"
+
+
+SECTION "CompoPaletteGBC", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBC:
 	dw cOffWhite
 	INCBIN "compo_logo_gbc.pal", 2, 6
@@ -364,30 +416,13 @@ CompoPaletteGBC:
 	INCBIN "compo_button_gbc.pal"
 
 
-SECTION "TilesGBA", ROMX[$7000], BANK[BANK_COMPO]
-CompoTilesGBA:
-	INCBIN "compo_logo_gbc.2bpp"
-	INCBIN "compo_button.2bpp"
-	INCBIN "compo_text.2bpp"
-	INCBIN "compo_obj.2bpp"
-.end
-	INCBIN "compo_logo_gbc.tilemap"
+SECTION "CompoPaletteGBA", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBA:
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_button.pal"
 	INCBIN "compo_obj.pal"
 	INCBIN "compo_button.pal"
-
-
-SECTION "TilesSGB", ROMX[$5000], BANK[BANK_COMPO]
-CompoTilesSGB:
-	INCBIN "compo_logo_sgb.2bpp"
-	ds 16
-	INCBIN "compo_text.2bpp"
-	INCBIN "compo_obj_sgb.2bpp"
-.end
-	INCBIN "compo_logo_gbc.tilemap"
 
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_SGB], ALIGN[8]

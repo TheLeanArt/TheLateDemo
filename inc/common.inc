@@ -7,8 +7,8 @@
 DEF BOOTUP_B_DMG0        EQU $FF
 
 DEF B_FLAGS_SGB          EQU   0
-DEF B_FLAGS_GBA          EQU   0
 DEF B_FLAGS_GBC          EQU   1
+DEF B_FLAGS_GBA          EQU   2
 DEF B_FLAGS_DMG0         EQU   2
 
 DEF FLAGS_DMG            EQU   0
@@ -17,9 +17,11 @@ DEF FLAGS_GBC            EQU   1 << B_FLAGS_GBC
 DEF FLAGS_GBA            EQU   1 << B_FLAGS_GBC | 1 << B_FLAGS_GBA
 DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
+DEF FLAGS_MASK           EQU   FLAGS_SGB | FLAGS_GBC
+
+DEF BANK_INIT            EQU   1
 DEF BANK_SGB             EQU   2
 DEF BANK_COMPO           EQU   3
-DEF BANK_MASK            EQU   4
 
 DEF cOffWhite            EQU %0_11111_10110_11011
 DEF cOffWhiteSGB         EQU %0_11111_11011_11100

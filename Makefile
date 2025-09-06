@@ -102,7 +102,7 @@ art/compo/compo_text.2bpp: art/compo/compo_text.png
 	$(RGBGFX) -u $< -o $@ -T -b 0x40
 
 art/compo/compo_obj.2bpp: art/compo/compo_obj.png
-	$(RGBGFX) -u $< -o $@ -T -P -b 0xA9
+	$(RGBGFX) -u $< -o $@ -T -P -b 0xB0
 
 art/compo/%.2bpp: art/compo/%.png
 	$(RGBGFX) -u $< -o $@
