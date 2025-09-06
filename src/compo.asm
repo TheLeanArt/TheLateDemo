@@ -16,6 +16,8 @@ DEF xCompoBtn2   EQU  196
 DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
 DEF vCompoObj    EQU   35
 
+DEF tCompoEmpty  EQU  $90
+
 DEF yCompoObj    EQU   32
 DEF xCompoObj    EQU  183
 DEF yCompoDelta  EQU   64
@@ -292,9 +294,6 @@ InitSGB:
 	ld de, BorderSGB
 	ld hl, PctTrnSGB
 	call SGB_CopyVRAM
-	ld de, BorderPalettesSGB
-	ld hl, PalTrnSGB
-	call SGB_CopyVRAM
 	call ClearVRAM
 	ld hl, CompoPaletteSGB
 	call SGB_SendPacket
@@ -311,10 +310,11 @@ ClearVRAM:
 	ld hl, TILEMAP0
 .loop
 	rst WaitVRAM
-	ld a, 2
+	ld a, tCompoEmpty
 	ld [hli], a
 	bit 2, h
 	jr z, .loop
+	call DoSoundSGB2
 	; Fall through
 
 DoSoundSGB2::
@@ -444,29 +444,33 @@ BorderTilesSGB:
 SECTION "BorderSGB", ROMX, BANK[BANK_COMPO], ALIGN[8]
 BorderSGB:
 	INCBIN "compo_border.tilemap"
+	ds 256, 0
+	dw cOffWhiteSGB
+	INCBIN "compo_border.pal", 2
 
 
-SECTION "BorderPalettesSGB", ROMX[$6000], BANK[BANK_COMPO]
-BorderPalettesSGB:
-	INCBIN "compo_border.pal"
-
-
-SECTION "SGB Packets", ROMX, BANK[BANK_COMPO], ALIGN[8]
+SECTION "ChrTrn1SGB", ROMX, BANK[BANK_COMPO]
 ChrTrn1SGB:
 	db SGB_CHR_TRN | $01
 	ds 15, 0
+
+
+SECTION "PctTrnSGB", ROMX, BANK[BANK_COMPO]
 PctTrnSGB:
 	db SGB_PCT_TRN | $01
 	ds 15, 0
-PalTrnSGB:
-	db SGB_PAL_TRN | $01
-	ds 15, 0
+
+
+SECTION "CompoPaletteSGB", ROMX, BANK[BANK_COMPO]
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
 	dw cOffWhiteSGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_obj.pal",  2, 6
 	db 0
+
+
+SECTION "FreezeSGB", ROMX, BANK[BANK_COMPO]
 FreezeSGB:
 	db SGB_MASK_EN | $01
 	db SGB_MASK_EN_MASK_FREEZE
