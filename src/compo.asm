@@ -63,9 +63,9 @@ Compo::
 	call CopyCompo
 
 	ldh a, [hFlags]
-	cp FLAGS_SGB
+	bit B_FLAGS_SGB, a
 	ld hl, UnfreezeSGB
-	call z, SGB_SendPacket
+	call nz, SGB_SendPacket
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
@@ -221,8 +221,8 @@ CopyCompo:
 .obj
 	ld de, CompoObjTiles
 	ldh a, [hFlags]
-	bit B_FLAGS_SGB, a
-	jr z, .objCont
+	cp FLAGS_SGB
+	jr nz, .objCont
 	ld de, CompoObjTilesSGB
 .objCont
 	ld bc, CompoObjTiles.end - CompoObjTiles
