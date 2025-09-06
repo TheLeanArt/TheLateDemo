@@ -295,6 +295,7 @@ InitSGB:
 	ld de, BorderPalettesSGB
 	ld hl, PalTrnSGB
 	call SGB_CopyVRAM
+	call ClearVRAM
 	ld hl, CompoPaletteSGB
 	call SGB_SendPacket
 	; Fall through
@@ -302,6 +303,17 @@ InitSGB:
 SetBank:
 	ld a, BANK_COMPO
 	ld [rROMB0], a
+	ret
+
+
+SECTION "ClearVRAM", ROM0
+ClearVRAM:
+	ld hl, STARTOF(VRAM)
+.loop
+	xor a
+	ld [hli], a
+	bit 5, l
+	jr z, .loop
 	ret
 
 
