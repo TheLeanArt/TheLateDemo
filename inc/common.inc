@@ -9,7 +9,7 @@ DEF BOOTUP_B_DMG0        EQU $FF
 DEF B_FLAGS_SGB          EQU   0
 DEF B_FLAGS_GBC          EQU   1
 DEF B_FLAGS_GBA          EQU   2
-DEF B_FLAGS_DMG0         EQU   2
+DEF B_FLAGS_DMG0         EQU   4
 
 DEF FLAGS_DMG            EQU   0
 DEF FLAGS_SGB            EQU   1 << B_FLAGS_SGB
