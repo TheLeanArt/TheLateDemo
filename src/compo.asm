@@ -9,7 +9,7 @@ include "common.inc"
 
 DEF tCompoBtn    EQUS "${T_COMPO_BTN}"
 DEF pCompoBtn    EQU    1
-DEF yCompoBtn    EQU  107
+DEF yCompoBtn    EQU  111
 DEF xCompoBtn1   EQU  187
 DEF xCompoBtn2   EQU  196
 
@@ -18,7 +18,7 @@ DEF vCompoObj    EQU   35
 
 DEF tCompoEmpty  EQU  $70
 
-DEF yCompoObj    EQU   32
+DEF yCompoObj    EQU   36
 DEF xCompoObj    EQU  183
 DEF yCompoDelta  EQU   64
 DEF xCompoDelta  EQU   64
@@ -26,7 +26,9 @@ DEF xCompoDelta  EQU   64
 DEF yCompoBottom EQU yCompoObj + yCompoDelta
 DEF xCompoRight  EQU xCompoObj + xCompoDelta
 
+DEF yCompoInit1  EQU   -4
 DEF xCompoInit1  EQU -160
+DEF yCompoWin2   EQU    4
 DEF xCompoWin2   EQU  152 + WX_OFS
 
 DEF xCompoStop1  EQU  -64
@@ -111,7 +113,7 @@ Compo::
 	ld e, l
 
 .compo1
-	xor a
+	ld a, yCompoInit1
 	ldh [rSCY], a
 	ld a, xCompoInit1
 	ldh [rSCX], a
@@ -120,7 +122,7 @@ Compo::
 	call LoopCompo
 
 .compo2
-	xor a
+	ld a, yCompoWin2
 	ldh [rWY], a
 	ld a, xCompoWin2
 	ldh [rWX], a
@@ -240,7 +242,8 @@ CopyCompo:
 	call MemCopyAndClear
 
 .textMap
-	ld h, HIGH(TILEMAP1)
+	ld h, HIGH(TILEMAP1) - 1
+	call MemCopyAndClear.loop
 	ld d, HIGH(CompoTextMap)
 	ld b, HIGH(CompoTextMap.end - CompoTextMap)
 	; Fall through
