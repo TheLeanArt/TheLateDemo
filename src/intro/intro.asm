@@ -211,7 +211,7 @@ ENDR
 
 ASSERT (BANK(song_ending) == 1)
 	ld hl, song_ending         ; Load the song address into HL
-	call hUGE_init             ; Initialize song
+	call hUGE_SelectSong       ; Initialize song
 
 	ld e, 0                    ; Use E as our step counter
 .mainLoop
@@ -247,7 +247,7 @@ ASSERT (BANK(song_ending) == 1)
 	call hFixedOAMDMA          ; Prevent lag
 
 	push de                    ; Save the step counter
-	call hUGE_dosound          ; Play sound
+	call hUGE_TickSound        ; Play sound
 	pop de                     ; Restore the step counter
 
 	inc e                      ; Increment the step counter
@@ -257,7 +257,7 @@ ASSERT (BANK(song_ending) == 1)
 	jp Compo                   ; Proceed to compo animation
 
 
-SECTION "Intro Subroutines", ROM0
+SECTION "Intro Subroutines", ROMX, BANK[1]
 
 SetOddball:
 	ld a, [de]                 ; Load the Y value

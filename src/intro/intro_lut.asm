@@ -30,7 +30,7 @@ ASSERT (LOW(@) == 0)
 
 ENDM
 
-SECTION "Intro LUT", ROM0, ALIGN[8]
+SECTION "Intro LUT", ROMX, BANK[1], ALIGN[8]
 
 IntroLUT::
 

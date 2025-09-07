@@ -71,7 +71,7 @@ Compo::
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
-	call hUGE_dosound
+	call hUGE_TickSound
 
 .compo0
 	xor a
@@ -199,7 +199,7 @@ LoopCompo:
 
 .cont4
 	push de
-	call hUGE_dosound
+	call hUGE_TickSound
 	pop de
 	jr .loop3
 
@@ -329,7 +329,7 @@ DoSound2::
 DoSound::
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
-	call hUGE_dosound
+	call hUGE_TickSound
 	; Fall through
 
 SetBank:

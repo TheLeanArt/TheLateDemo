@@ -14,6 +14,8 @@ RGBASMFLAGS  = -I inc -I art -I art/intro
 
 RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border -DT_COMPO_BTN=$(T_COMPO_BTN) -DT_COMPO_OBJ=$(T_COMPO_OBJ)
 
+RGBASMFLAGS_FORT = -I inc/fortISSimO
+
 T_COMPO_BTN = 3F
 T_COMPO_TXT = 40
 T_COMPO_OBJ = A9
@@ -25,7 +27,7 @@ OBJS = \
 	src/compo.o \
 	src/oamdma.o \
 	src/sgb.o \
-	src/hUGEDriver.o \
+	src/fortISSimO.o \
 	src/song_ending.o \
 
 INC = \
@@ -88,6 +90,12 @@ src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 
 src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 	$(RGBASM) $(RGBASMFLAGS_COMPO) $< -o $@
+
+src/song_ending.o: src/song_ending.asm
+	$(RGBASM) $(RGBASMFLAGS_FORT) $< -o $@
+
+src/fortISSimO.o: src/fortISSimO.asm
+	$(RGBASM) $(RGBASMFLAGS_FORT) $< -o $@
 
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
