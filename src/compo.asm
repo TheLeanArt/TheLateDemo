@@ -350,6 +350,12 @@ InitGBC:
 	call GBC_SetPalettes
 	ld a, OPRI_COORD
 	ldh [c], a
+	xor a               ; Set which line to trigger the LY=LYC interrupt on by setting the rLYC register
+	ldh [rLYC], a       ;  ...
+	ld a, STAT_LYC      ; Load the flag to enable LYC STAT interrupts into A
+	ldh [rSTAT], a      ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
+	ld a, IE_VBLANK | IE_STAT ; Load the flag to enable the VBlank and STAT interrupts into A
+	ldh [rIE], a        ; Load the prepared flag into the interrupt enable register
 	jr DoSound2
 
 
@@ -475,6 +481,6 @@ UnfreezeSGB:
 	ds 14
 
 
-SECTION "HRAM", HRAM
+SECTION FRAGMENT "HRAM", HRAM
 hFrameCount:
 	ds 1

@@ -150,12 +150,17 @@ EntryPoint:
 	xor a                      ; Display everything as white
 	ldh [rOBP1], a             ; Set the alternate object palette
 
+	dec a                      ; Set A to $FF
+	ldh [hColorLow], a         ; Set the background color
+	ldh [hColorHigh], a        ; ...
+
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank and STAT interrupts into A
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
 	xor a                      ; Set A to zero
 	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
 
-	call VBlank                ; Perform our OAM DMA and enable interrupts!
+	call hFixedOAMDMA          ; Perform our OAM DMA
+	ei                         ; Enable interrupts!
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
