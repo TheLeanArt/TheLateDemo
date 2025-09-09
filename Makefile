@@ -4,7 +4,7 @@ RGBASM  = rgbasm
 RGBGFX  = rgbgfx
 
 TITLE = THELATEDEMO
-VER = 2.1
+VER = 2.2
 TARGET = latedemo_$(VER).gbc
 SYM = latedemo_$(VER).sym
 
