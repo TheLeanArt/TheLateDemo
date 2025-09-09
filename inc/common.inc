@@ -22,6 +22,7 @@ DEF FLAGS_MASK           EQU   FLAGS_SGB | FLAGS_GBC
 DEF BANK_INIT            EQU   1
 DEF BANK_COMPO           EQU   2
 
+DEF cWhite               EQU %0_11111_11111_11111
 DEF cOffWhite            EQU %0_11111_10110_11011
 DEF cOffWhiteSGB         EQU %0_11111_11011_11100
 DEF cBlack               EQU %0_00000_00000_00000

@@ -65,7 +65,6 @@ EntryPoint:
 	jr nz, .cont               ; If not, proceed
 
 .GBC:
-	call SetPalettes           ; Set GBC palettes
 	set B_FLAGS_GBC, d         ; Set the GBC flag
 	ld a, b                    ; Load the initial value of B into A
 	cp BOOTUP_B_AGB            ; Are we running on GBA?
@@ -96,11 +95,23 @@ EntryPoint:
 	ld a, d                    ; Load the flags into A
 	ldh [hFlags], a            ; Set our flags
 
-	cp FLAGS_SGB               ; Are we running on SGB/SGB2?
-	call z, SetPalettesSGB     ; If yes, set SGB palettes
+.testGBC
+	bit B_FLAGS_GBC, d         ; Are we running on GBC?
+	jr z, .testSGB             ; If not, proceed to testing for SGB
+	ld e, 8                    ; Load the total color count into E
+	ld hl, PaletteGBC          ; Load the palette address into HL
+	call GBC_SetPalettes       ; Set GBC palettes
+	jr .cont2                  ; Proceed to OAM DMA setup
 
+.testSGB
+	bit B_FLAGS_SGB, d         ; Are we running on SGB/SGB2?
+	jr z, .cont2               ; If not, proceed to OAM DMA setup
+	ld hl, PaletteSGB          ; Load the palette address into HL
+	call SGB_SendPacket        ; Set SGB palettes
+
+.cont2
 	; Load the length of the OAMDMA routine into B
-    ; and the low byte of the destination into C
+	; and the low byte of the destination into C
 	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
 	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
 .copyOAMDMAloop
@@ -379,27 +390,11 @@ SetObject16:
 	ld [hli], a
 	ret
 
-SetPalettes:
-	ld hl, rBGPI
-	call SetPalette
-	; Fall through
-
-SetPalette:
-	ld a, BGPI_AUTOINC
-	ld [hli], a
-	ld a, $FF
-	ld [hl], a
-	ld [hl], a
-	cpl
-REPT 5
-	ld [hl], a
+PaletteGBC:
+	dw cWhite
+REPT 7
+	dw cBlack
 ENDR
-	ld [hli], a
-	ret
-
-SetPalettesSGB:
-	ld hl, PaletteSGB
-	jp SGB_SendPacket
 
 PaletteSGB:
 	db SGB_PAL01 | $01
