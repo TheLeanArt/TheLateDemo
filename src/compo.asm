@@ -299,9 +299,14 @@ InitSGB:
 	call SGB_InitVRAM
 	ld hl, FreezeSGB
 	call SGB_SendPacket
+	rst ScreenOff
+	ld hl, STARTOF(VRAM)
+	ld c, 32
+	call ClearShort
 	ld bc, BorderTilesSGB.end - BorderTilesSGB
 	ld de, BorderTilesSGB
-	call SGB_SendBorderTiles
+	call MemCopy
+	call SGB_SendBorder.cont
 	ld bc, BorderSGB.end - BorderSGB
 	ld de, BorderSGB
 	call SGB_SendBorder
@@ -436,7 +441,7 @@ CompoPaletteGBA:
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO]
 BorderTilesSGB:
-	INCBIN "compo_border.4bpp"
+	INCBIN "compo_border.4bpp", 32
 .end
 ChrTrn1SGB:
 	db SGB_CHR_TRN | $01
