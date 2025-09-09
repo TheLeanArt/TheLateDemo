@@ -343,32 +343,17 @@ SetBank:
 
 InitGBC:
 	rst WaitVBlank
-	ld c, LOW(rBGPI)
 	ld hl, CompoPaletteGBC
 	ldh a, [hFlags]
 	bit B_FLAGS_GBA, a
 	jr z, .cont
 	ld hl, CompoPaletteGBA
-
 .cont
-	call .do
-	call .do
+	ld e, 16
+	call GBC_SetPalettes
 	ld a, OPRI_COORD
 	ldh [c], a
 	jr DoSound2
-
-.do
-	ld a, BGPI_AUTOINC
-	ldh [c], a
-	inc c
-	ld b, 16
-.loop
-	ld a, [hli]
-	ldh [c], a
-	dec b
-	jr nz, .loop
-	inc c
-	ret
 
 
 SECTION "CompoObjMap", ROMX, BANK[BANK_INIT], ALIGN[8]
