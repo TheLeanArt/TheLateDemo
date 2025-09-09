@@ -243,7 +243,7 @@ CopyCompo:
 
 .textMap
 	ld h, HIGH(TILEMAP1) - 1
-	call MemCopyAndClear.loop
+	call ClearShort     ; Clear 256 bytes (since C is zero from before)
 	ld d, HIGH(CompoTextMap)
 	ld b, HIGH(CompoTextMap.end - CompoTextMap)
 	; Fall through
@@ -264,10 +264,12 @@ MemCopy::
 MemCopyAndClear::
 	call MemCopy        ; Copy memory
 	xor a               ; Clear the A register
-.loop
+	; Fall through
+
+ClearShort:
 	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
 	dec c               ; Decrement the loop counter
-	jr nz, .loop        ; Stop if C is zero, otherwise keep looping
+	jr nz, ClearShort   ; Stop if C is zero, otherwise keep looping
 	ret
 
 AddButtons:
