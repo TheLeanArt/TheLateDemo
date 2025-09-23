@@ -364,7 +364,7 @@ SetTwoObjects16:
 	call SetObject16           ; Set the first object
 	; Fall through
 
-SetObject16:
+SetObject16::
 	ld a, d                    ; Load the X coordinate from D
 	ld [hli], a                ; Set the Y coordinate
 	ld a, e                    ; Load the X coordinate from E
