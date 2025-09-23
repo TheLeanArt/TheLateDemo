@@ -64,9 +64,7 @@ Intro::
 IF DEF(COLOR8)
 	ld de, TopTiles
 	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
-	ld c, 0
-	call CopyTopSingle
-	call CopyTopSingle
+	call CopyTopPostDouble
 	dec c
 	call CopyTopSingle
 	ld e, LOW(RegTiles)
@@ -150,7 +148,7 @@ REPT 4
 	ld [hli], a                ; Set the value
 ENDR
 
-IF DEF(COLOR8)
+IF C_INTRO_BY != C_INTRO_BOTTOM || DEF(COLOR8)
 
 	bit B_FLAGS_GBC, c         ; Are we running on GBC?
 	jr z, .cont2               ; If not, proceed to prevent lag
@@ -224,7 +222,10 @@ ASSERT (BANK(song_ending) == 1)
 
 SECTION "Intro Subroutines", ROM0
 
-IF DEF(COLOR8)
+CopyTopPostDouble:
+	ld c, 0                    ; Filter out bitplane 0
+	call CopyTopSingle         ; Copy the first tile
+	; Fall through
 
 CopyTopSingle:
 	ld a, l                    ; Load the value in L into A
@@ -242,8 +243,6 @@ CopyTopSingle:
 	dec b                      ; Decrement the inner loop counter
 	jr nz, .loop               ; Stop if B is zero, otherwise keep looping
 	ret
-
-ENDC
 
 CopyTopPreSafe:
 .loop1
@@ -379,9 +378,17 @@ SetObject16::
 	ld [hli], a                ; Set the attributes
 	ret
 
-IF DEF(COLOR8)
-
 Color8:
+
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	push de
+	ld hl, STARTOF(VRAM) | (T_INTRO_BY - 2) << 4
+	ld de, TopTiles.by
+	call CopyTopPostDouble
+	pop de
+ENDC
+
+IF DEF(COLOR8)
 FOR I, 0, 3
 IF I == 0
 	ld hl, wShadowOAM + OAMA_TILEID
@@ -399,9 +406,9 @@ ENDC
 	ld [hl], a
 	inc a
 ENDR
-	ret
-
 ENDC
+
+	ret
 
 SetPalettes:
 	ld hl, rBGPI
@@ -471,9 +478,18 @@ IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 		xor a
 	ENDC
 	ld [hl], a
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	ld [hl], a
+ELSE
 	ld [hli], a
+ENDC
 ELSE
 	ld bc, C_INTRO_BOTTOM
+	ld [hl], c
+	ld [hl], b
+ENDC
+IF C_INTRO_BY != C_INTRO_BOTTOM
+	ld bc, C_INTRO_BY
 	ld [hl], c
 	ld [hl], b
 	inc l
@@ -498,6 +514,7 @@ RegTiles:
 TopTiles:
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
+.by
 	INCBIN "intro_by.1bpp"
 .end
 
