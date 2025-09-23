@@ -6,7 +6,7 @@ Music by Nikku4211.
 
 ![Cover](https://img.itch.zone/aW1nLzIzMDUyNjcyLnBuZw==/315x250%23c/fDbJDo.png)
 
-![Not licensed by Nintendo](https://img.itch.zone/aW1hZ2UvMzg0MTE4NS8yMjkyNDE1Ny5wbmc=/347x500/UvghrD.png)
+![Not licensed by Nintendo](https://img.itch.zone/aW1hZ2UvMzg1NzQ1Mi8yMzI5MzU0MC5wbmc=/347x500/kopBdB.png)
 
 ![gbcompo25](https://img.itch.zone/aW1hZ2UvMzg1NzQ1Mi8yMzAxMzc2OS5wbmc=/347x500/hk%2BL3g.png)
 
