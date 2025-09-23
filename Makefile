@@ -19,7 +19,7 @@ T_COMPO_TXT = 40
 T_COMPO_OBJ = A9
 
 OBJS = \
-	src/intro/intro.o \
+	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/compo.o \
@@ -82,7 +82,7 @@ $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro.o: src/intro/intro.asm $(INC) $(INTRO_1BPP)
+src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_1BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
