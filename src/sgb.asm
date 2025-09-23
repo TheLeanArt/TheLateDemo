@@ -95,15 +95,7 @@ SGB_SendBorder::
 	inc de
 	dec b
 	jr nz, .loop
-	jr SGB_SendBorderTiles.cont
-
-
-SGB_SendBorderTiles::
-	rst ScreenOff
-	ld hl, STARTOF(VRAM)
-	call MemCopy
-
-.cont
+.cont::
 	push de
 	call DoSound2
 	call ScreenOn

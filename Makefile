@@ -4,22 +4,29 @@ RGBASM  = rgbasm
 RGBGFX  = rgbgfx
 
 TITLE = THELATEDEMO
-VER = 2.2
+VER = 2.3
 TARGET = latedemo_$(VER).gbc
 SYM = latedemo_$(VER).sym
 
 RGBLINKFLAGS = -n $(SYM)
 RGBFIXFLAGS  = -v -p 0xFF -m MBC1 -t $(TITLE) -c --sgb-compatible --old-licensee 0x33
-RGBASMFLAGS  = -I inc -I art -I art/intro
+RGBASMFLAGS  = -I inc -I art
 
-RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border -DT_COMPO_BTN=$(T_COMPO_BTN) -DT_COMPO_OBJ=$(T_COMPO_OBJ)
+RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
+	-DCOLOR8 \
+	-DC_INTRO_BACK=C_LILAC \
+
+RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border \
+	-DT_COMPO_BTN=$(T_COMPO_BTN) \
+	-DT_COMPO_OBJ=$(T_COMPO_OBJ)
 
 T_COMPO_BTN = 3F
 T_COMPO_TXT = 40
 T_COMPO_OBJ = A9
 
 OBJS = \
-	src/intro/intro.o \
+	src/main.o \
+	src/intro/intro_main.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/compo.o \
@@ -82,10 +89,10 @@ $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro.o: src/intro/intro.asm $(INC) $(INTRO_1BPP)
+src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_1BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
-	$(RGBASM) $(RGBASMFLAGS) $< -o $@
+	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
 src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 	$(RGBASM) $(RGBASMFLAGS_COMPO) $< -o $@

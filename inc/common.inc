@@ -22,22 +22,35 @@ DEF FLAGS_MASK           EQU   FLAGS_SGB | FLAGS_GBC
 DEF BANK_INIT            EQU   1
 DEF BANK_COMPO           EQU   2
 
-DEF cWhite               EQU %0_11111_11111_11111
-DEF cOffWhite            EQU %0_11111_10110_11011
-DEF cOffWhiteSGB         EQU %0_11111_11011_11100
-DEF cBlack               EQU %0_00000_00000_00000
+DEF C_LILAC              EQU %0_11111_10110_11011
+DEF C_LILAC_SGB          EQU %0_11111_11011_11100
 
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
+; @param B  Zero
+; @param \1 Page count
+MACRO CLEAR_LONG
+	xor a               ; Clear the A register
+	ld bc, \1           ; Clear B and set C to the page count
+.loop\@
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	dec b               ; Decrement the inner loop counter
+	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
+	dec c               ; Decrement the outer loop counter
+	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
+ENDM
+
 ; @param \1 Tiles prefix
-MACRO COPY_0_5BPP_SAFE
+MACRO COPY_0_5BPP_PRE_SAFE
 	ld bc, \1Tiles.end - \1Tiles ; Set BC to the byte count
 .loop\@
 	rst WaitVRAM        ; Wait for VRAM to become accessible
+REPT 2
 	ld a, [de]          ; Load a byte from the address DE points to into the A register
-REPT 4
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	xor a               ; Clear the A register
 	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
 ENDR
 	inc de              ; Increment the source pointer in DE
@@ -47,20 +60,11 @@ ENDR
 	jr nz, .loop\@      ; If B and C are both zero, OR B will be zero, otherwise keep looping
 ENDM
 
-; @param \1 Page-aligned Tiles prefix
-MACRO COPY_1BPP_SAFE
-ASSERT(HIGH(\1Tiles.end - \1Tiles))
-	ld bc, HIGH(\1Tiles.end - \1Tiles) ; Clear B and set C to the page count
-.loop\@
-	rst WaitVRAM        ; Wait for VRAM to become accessible
-	ld a, [de]          ; Load a byte from the address DE points to into the A register
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	ld [hli], a         ; Repeat for the second bitplane
-	inc de              ; Increment the source pointer in DE
-	dec b               ; Decrement the inner loop counter
-	jr nz, .loop\@      ; Stop if B is zero, otherwise keep looping
-	dec c               ; Decrement the outer loop counter
-	jr nz, .loop\@      ; Stop if C is zero, otherwise keep looping
+; @param \1 Tiles prefix
+MACRO COPY_1BPP_TOP_PRE_SAFE
+ASSERT(!HIGH(\1Tiles.end - \1Tiles))
+	ld c, (\1Tiles.end - \1Tiles) >> 3 ; Set C to the tile count
+	call CopyTopPreSafe
 ENDM
 
 ; @param \1 Page-aligned Tiles prefix

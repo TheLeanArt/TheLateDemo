@@ -10,8 +10,7 @@ include "common.inc"
 DEF tCompoBtn    EQUS "${T_COMPO_BTN}"
 DEF pCompoBtn    EQU    1
 DEF yCompoBtn    EQU  111
-DEF xCompoBtn1   EQU  187
-DEF xCompoBtn2   EQU  196
+DEF xCompoBtn    EQU  187
 
 DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
 DEF vCompoObj    EQU   35
@@ -87,27 +86,44 @@ Compo::
 	ld a, [bc]
 	inc c
 	cp tCompoObj
-	jr z, .cont
-	ld [hl], d
-	inc l
-	ld [hl], e
-	inc l
-	ld [hli], a
-	xor a
-	ld [hli], a
+	jr z, .skipDisp
 
-.cont
-	ld a, e
-	add TILE_WIDTH
-	ld e, a
-	cp xCompoRight
-	jr nz, .loop2
-	ld a, d
-	add TILE_HEIGHT
-	ld d, a
-	cp yCompoBottom
-	jr nz, .loop1
-	call AddButtons
+.addDisp
+	push bc                    ; Save the current map address
+	ld b, a                    ; Load tile ID
+	ld c, 0                    ; Load attributes
+	call SetObject16           ; Add display object
+	pop bc                     ; Restore the current map address
+	jr .cont1                  ; Proceed to edge check
+
+.skipDisp
+	ld a, e                    ; Load the value in E into A
+	add TILE_WIDTH             ; Add tile width
+	ld e, a                    ; Load the value in A into E
+
+.cont1
+	cp xCompoRight             ; Right edge reached?
+	jr nz, .loop2              ; If not, keep looping
+	ld a, d                    ; Load the value in D into A
+	add TILE_HEIGHT            ; Add tile height
+	ld d, a                    ; Load the value in A into D
+	cp yCompoBottom            ; Bottom edge reached?
+	jr nz, .loop1              ; If not, keep looping
+
+	ldh a, [hFlags]            ; Load flags
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	jr z, .cont2               ; If not, skip
+
+.addBtns
+	ld bc, tCompoBtn << 8 | pCompoBtn
+	ld de, yCompoBtn << 8 | xCompoBtn
+	call SetObject16           ; Set button B object
+	dec b                      ; Restore tile ID
+	dec b                      ; ...
+	inc e                      ; Advance X
+	call SetObject16           ; Set button A object
+
+.cont2
 	call hFixedOAMDMA
 	inc l
 	ld e, l
@@ -243,7 +259,7 @@ CopyCompo:
 
 .textMap
 	ld h, HIGH(TILEMAP1) - 1
-	call MemCopyAndClear.loop
+	call ClearShort     ; Clear 256 bytes (since C is zero from before)
 	ld d, HIGH(CompoTextMap)
 	ld b, HIGH(CompoTextMap.end - CompoTextMap)
 	; Fall through
@@ -264,31 +280,12 @@ MemCopy::
 MemCopyAndClear::
 	call MemCopy        ; Copy memory
 	xor a               ; Clear the A register
-.loop
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	dec c               ; Decrement the loop counter
-	jr nz, .loop        ; Stop if C is zero, otherwise keep looping
-	ret
-
-AddButtons:
-	ldh a, [hFlags]
-	bit B_FLAGS_GBC, a
-	ret z
-
-	ld b, xCompoBtn1
-	call .do
-	ld b, xCompoBtn2
 	; Fall through
 
-.do
-	ld a, yCompoBtn
-	ld [hli], a
-	ld a, b
-	ld [hli], a
-	ld a, tCompoBtn
-	ld [hli], a
-	ld a, pCompoBtn
-	ld [hli], a
+ClearShort:
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	dec c               ; Decrement the loop counter
+	jr nz, ClearShort   ; Stop if C is zero, otherwise keep looping
 	ret
 
 
@@ -297,9 +294,14 @@ InitSGB:
 	call SGB_InitVRAM
 	ld hl, FreezeSGB
 	call SGB_SendPacket
+	rst ScreenOff
+	ld hl, STARTOF(VRAM)
+	ld c, 32
+	call ClearShort
 	ld bc, BorderTilesSGB.end - BorderTilesSGB
 	ld de, BorderTilesSGB
-	call SGB_SendBorderTiles
+	call MemCopy
+	call SGB_SendBorder.cont
 	ld bc, BorderSGB.end - BorderSGB
 	ld de, BorderSGB
 	call SGB_SendBorder
@@ -422,7 +424,7 @@ CompoTextMap:
 
 SECTION "CompoPaletteGBC", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBC:
-	dw cOffWhite
+	dw C_LILAC
 	INCBIN "compo_logo_gbc.pal", 2, 6
 	INCBIN "compo_button_gbc.pal"
 	INCBIN "compo_obj_gbc.pal"
@@ -431,7 +433,7 @@ CompoPaletteGBC:
 
 SECTION "CompoPaletteGBA", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBA:
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_button.pal"
 	INCBIN "compo_obj.pal"
@@ -440,7 +442,7 @@ CompoPaletteGBA:
 
 SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO]
 BorderTilesSGB:
-	INCBIN "compo_border.4bpp"
+	INCBIN "compo_border.4bpp", 32
 .end
 ChrTrn1SGB:
 	db SGB_CHR_TRN | $01
@@ -451,7 +453,7 @@ SECTION "BorderSGB", ROMX, BANK[BANK_COMPO]
 BorderSGB:
 	INCBIN "compo_border.tilemap"
 .end
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_border.pal", 2
 PctTrnSGB:
 	db SGB_PCT_TRN | $01
@@ -461,7 +463,7 @@ PctTrnSGB:
 SECTION "CompoPaletteSGB", ROMX, BANK[BANK_COMPO]
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_obj.pal",  2, 6
 	db 0
