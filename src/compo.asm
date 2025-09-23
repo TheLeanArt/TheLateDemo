@@ -423,7 +423,7 @@ CompoTextMap:
 
 SECTION "CompoPaletteGBC", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBC:
-	dw cOffWhite
+	dw C_LILAC
 	INCBIN "compo_logo_gbc.pal", 2, 6
 	INCBIN "compo_button_gbc.pal"
 	INCBIN "compo_obj_gbc.pal"
@@ -432,7 +432,7 @@ CompoPaletteGBC:
 
 SECTION "CompoPaletteGBA", ROMX, BANK[BANK_COMPO]
 CompoPaletteGBA:
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_button.pal"
 	INCBIN "compo_obj.pal"
@@ -452,7 +452,7 @@ SECTION "BorderSGB", ROMX, BANK[BANK_COMPO]
 BorderSGB:
 	INCBIN "compo_border.tilemap"
 .end
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_border.pal", 2
 PctTrnSGB:
 	db SGB_PCT_TRN | $01
@@ -462,7 +462,7 @@ PctTrnSGB:
 SECTION "CompoPaletteSGB", ROMX, BANK[BANK_COMPO]
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
-	dw cOffWhiteSGB
+	dw C_LILAC_SGB
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_obj.pal",  2, 6
 	db 0
