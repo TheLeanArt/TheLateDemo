@@ -63,10 +63,7 @@ Compo::
 	rst ScreenOff
 	call CopyCompo
 
-	ldh a, [hFlags]
-	bit B_FLAGS_SGB, a
-	ld hl, UnfreezeSGB
-	call nz, SGB_SendPacket
+	call SGB_TryUnfreeze
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
@@ -292,8 +289,7 @@ ClearShort:
 SECTION "InitSGB", ROM0
 InitSGB:
 	call SGB_InitVRAM
-	ld hl, FreezeSGB
-	call SGB_SendPacket
+	call SGB_Freeze
 	rst ScreenOff
 	ld hl, STARTOF(VRAM)
 	ld c, 32
@@ -461,20 +457,6 @@ CompoPaletteSGB:
 	INCBIN "compo_logo.pal", 2, 6
 	INCBIN "compo_obj.pal",  2, 6
 	db 0
-
-
-SECTION "FreezeSGB", ROMX, BANK[BANK_COMPO]
-FreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_FREEZE
-	ds 14
-
-
-SECTION "UnfreezeSGB", ROMX, BANK[BANK_COMPO]
-UnfreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_CANCEL
-	ds 14
 
 
 SECTION "HRAM", HRAM

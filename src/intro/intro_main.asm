@@ -41,42 +41,20 @@ SECTION "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	jr z, .testSGB             ; If not, proceed to testing for SGB
+	jr z, .trySGB              ; If not, proceed to try setting SGB palettes
 	call SetPalettes           ; Set GBC palettes
 	jr .cont                   ; Proceed to initialize objects
 
-.testSGB
-	bit B_FLAGS_SGB, a         ; Are we running on SGB/SGB2?
-	jr z, .cont                ; If not, proceed to initialize objects
-	ld hl, PaletteSGB          ; Load the palette address into HL
-	call SGB_SendPacket        ; Set SGB palettes
+.trySGB
+	ld hl, PaletteSGB          ; Load the palette address into the HL register
+	call SGB_TrySendPacket     ; Try setting SGB palettes
 
 .cont
 	call InitTop               ; Initialize our objects
+	call ClearOAM              ; Clear the remaining shadow OAM
+	call CopyIntro             ; Copy our tiles
 
-.clearOAMLoop
-	xor a                      ; Set A to zero
-	ld [hli], a                ; Set and advance
-	ld a, l                    ; Load the lower address byte into A
-	cp OAM_SIZE                ; End of OAM reached?
-	jr nz, .clearOAMLoop       ; If not, continue looping
-
-IF DEF(COLOR8)
-	ld de, TopTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
-	call CopyTopPostDouble
-	dec c
-	call CopyTopSingle
-	ld e, LOW(RegTiles)
-	ld l, LOW(T_INTRO_REG << 4) - 8
-ELSE
-	ld de, RegTiles
-	ld hl, (STARTOF(VRAM) | T_INTRO_REG << 4 | $100) - 8
-ENDC
-	COPY_1BPP_TOP_PRE_SAFE Reg ; Copy the ® tiles
-	ld l, LOW(T_INTRO_NOT << 4); Advance to the beginning of the next tile
-	COPY_1BPP_TOP_PRE_SAFE Top ; Copy the top tiles
-	COPY_0_5BPP_PRE_SAFE Intro2; Copy 0.5bpp tiles
+	call SGB_TryFreeze         ; Freeze SGB display
 
 	call ClearBackground       ; Clear the logo from the background
 	INTRO_META_INIT BY         ; Draw BY on the background
@@ -102,6 +80,13 @@ ENDC
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
+
+	call SGB_TryUnfreeze       ; Unfreeze SGB display
+
+IF DEF(INTRO_SONG)
+	ld hl, INTRO_SONG          ; Load the song address into the HL register
+	call hUGE_init             ; Initialize song
+ENDC
 
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
@@ -148,7 +133,7 @@ REPT 4
 	ld [hli], a                ; Set the value
 ENDR
 
-IF C_INTRO_BY != C_INTRO_BOTTOM || DEF(COLOR8)
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
 
 	bit B_FLAGS_GBC, c         ; Are we running on GBC?
 	jr z, .cont2               ; If not, proceed to prevent lag
@@ -172,10 +157,6 @@ ENDC
 	
 	ld a, X_INTRO_N2           ; Set the window's X coordinate
 	ldh [rWX], a               ; ...
-
-ASSERT (BANK(song_ending) == 1)
-	ld hl, song_ending         ; Load the song address into HL
-	call hUGE_init             ; Initialize song
 
 	ld e, 0                    ; Use E as our step counter
 .mainLoop
@@ -210,59 +191,31 @@ ASSERT (BANK(song_ending) == 1)
 
 	call hFixedOAMDMA          ; Prevent lag
 
+IF DEF(INTRO_SONG)
 	push de                    ; Save the step counter
 	call hUGE_dosound          ; Play sound
 	pop de                     ; Restore the step counter
+ENDC
 
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
 	jr z, .mainLoop            ; If not, continue to loop
+
+IF DEF(INTRO_SONG) && INTRO_SONG_DELAY
+	ld b, INTRO_SONG_DELAY     ; Small delay for the audio to finish playing
+.songLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	push bc                    ; Save the loop counter
+	call hUGE_dosound          ; Play sound
+	pop bc                     ; Restore the loop counter
+	dec b                      ; Decrement the loop counter
+	jr nz, .songLoop           ; Continue to loop unless zero
+ENDC
+
 	ret
 
 
 SECTION "Intro Subroutines", ROM0
-
-CopyTopPostDouble:
-	ld c, 0                    ; Filter out bitplane 0
-	call CopyTopSingle         ; Copy the first tile
-	; Fall through
-
-CopyTopSingle:
-	ld a, l                    ; Load the value in L into A
-	add TILE_SIZE              ; Add tile size
-	ld l, a                    ; Load the result into L
-	ld b, 8                    ; Set the loop counter
-.loop
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and c                      ; Filter the value in A
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	inc e                      ; Increment the source pointer in E
-	dec b                      ; Decrement the inner loop counter
-	jr nz, .loop               ; Stop if B is zero, otherwise keep looping
-	ret
-
-CopyTopPreSafe:
-.loop1
-	ld a, l                    ; Load the value in L into A
-	add TILE_SIZE              ; Add tile size
-	ld l, a                    ; Load the result into L
-	ld b, 8                    ; Set the loop counter
-.loop2
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	xor a                      ; Clear the A register
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	inc de                     ; Increment the source pointer in DE
-	dec b                      ; Decrement the inner loop counter
-	jr nz, .loop2              ; Stop if B is zero, otherwise keep looping
-	dec c                      ; Decrement the outer loop counter
-	jr nz, .loop1              ; Stop if C is zero, otherwise keep looping
-	ret
-
 SetOddball:
 	ld a, [de]                 ; Load the Y value
 	ldh [c], a                 ; Set the Y coordinate
@@ -345,7 +298,7 @@ InitReg:
 	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
-	and 1 << B_FLAGS_DMG0      ; Isolate the DMG0 flag
+	and FLAGS_DMG0             ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
 	jr SetObject16             ; Set the object and return
 
@@ -380,11 +333,11 @@ SetObject16::
 
 Color8:
 
-IF C_INTRO_BY != C_INTRO_BOTTOM
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
 	push de
 	ld hl, STARTOF(VRAM) | (T_INTRO_BY - 2) << 4
-	ld de, TopTiles.by
-	call CopyTopPostDouble
+	ld de, ByTiles
+	call CopyTopDouble
 	pop de
 ENDC
 
@@ -462,6 +415,7 @@ ENDC
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
+
 IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
 	ld a, LOW(C_INTRO_BACK)
 	ld [hl], a
@@ -471,6 +425,7 @@ ELSE
 	ld [hl], c
 	ld [hl], b
 ENDC
+
 IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 	IF C_INTRO_BOTTOM
 		ld a, LOW(C_INTRO_BOTTOM)
@@ -478,7 +433,7 @@ IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 		xor a
 	ENDC
 	ld [hl], a
-IF C_INTRO_BY != C_INTRO_BOTTOM
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
 	ld [hl], a
 ELSE
 	ld [hli], a
@@ -488,56 +443,25 @@ ELSE
 	ld [hl], c
 	ld [hl], b
 ENDC
-IF C_INTRO_BY != C_INTRO_BOTTOM
-	ld bc, C_INTRO_BY
+
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	ld bc, C_INTRO_BY1
+	ld [hl], c
+	ld [hl], b
+IF C_INTRO_BY2 != C_INTRO_BY1
+	ld bc, C_INTRO_BY2
+ENDC
 	ld [hl], c
 	ld [hl], b
 	inc l
 ENDC
+
 	ret
 
 PaletteSGB:
 	db SGB_PAL01 | $01
-	dw C_LILAC_SGB
+	dw C_INTRO_BACK_SGB
 REPT 6
-	dw C_BLACK
+	dw C_INTRO_BOTTOM_SGB
 ENDR
 	db 0
-
-
-SECTION "Intro Tile data", ROM0, ALIGN[8]
-
-RegTiles:
-	INCBIN "intro_reg.1bpp"
-.end
-
-TopTiles:
-	INCBIN "intro_not.1bpp"
-	INCBIN "intro_top.1bpp"
-.by
-	INCBIN "intro_by.1bpp"
-.end
-
-Intro2Tiles:
-FOR I, 0, 128, 2
-	INCBIN "intro_n0.1bpp", I, 1
-ENDR
-FOR I, 0, 64, 2
-	INCBIN "intro_i.1bpp", I, 1
-ENDR
-FOR I, 0, 64, 2
-	INCBIN "intro_t.1bpp", I, 1
-ENDR
-FOR I, 0, 128, 2
-	INCBIN "intro_d.1bpp", I, 1
-ENDR
-FOR I, 0, 128, 2
-	INCBIN "intro_o.1bpp", I, 1
-ENDR
-FOR I, 0, 256, 2
-	INCBIN "intro_n.1bpp", I, 1
-ENDR
-FOR I, 0, 256, 2
-	INCBIN "intro_e.1bpp", I, 1
-ENDR
-.end

@@ -13,8 +13,10 @@ RGBFIXFLAGS  = -v -p 0xFF -m MBC1 -t $(TITLE) -c --sgb-compatible --old-licensee
 RGBASMFLAGS  = -I inc -I art
 
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
-	-DCOLOR8 \
-	-DC_INTRO_BACK=C_LILAC \
+	-D INTRO_SONG=song_ending \
+	-D COLOR8 \
+	-D C_INTRO_BACK=C_LILAC \
+	-D C_INTRO_BACK_SGB=C_LILAC_SGB \
 
 RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border \
 	-DT_COMPO_BTN=$(T_COMPO_BTN) \
@@ -27,6 +29,7 @@ T_COMPO_OBJ = A9
 OBJS = \
 	src/main.o \
 	src/intro/intro_main.o \
+	src/intro/intro_copy.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/compo.o \
@@ -57,6 +60,11 @@ INTRO_1BPP = \
 	art/intro/intro_d.1bpp \
 	art/intro/intro_o.1bpp \
 
+INTRO_2BPP = \
+	art/intro/intro_not.2bpp \
+	art/intro/intro_top_0.2bpp \
+	art/intro/intro_by.2bpp \
+
 COMPO_2BPP = \
 	art/compo/compo_logo.2bpp \
 	art/compo/compo_logo_gbc.2bpp \
@@ -83,13 +91,13 @@ COMPO_BORDER = \
 all: $(TARGET)
 
 clean:
-	rm -f $(TARGET) $(SYM) $(OBJS) $(INTRO_1BPP) $(COMPO_2BPP) $(COMPO_EXTRAS)
+	rm -f $(TARGET) $(SYM) $(OBJS) $(INTRO_1BPP) $(INTRO_2BPP) $(COMPO_2BPP) $(COMPO_EXTRAS)
 
 $(TARGET): $(OBJS)
 	$(RGBLINK) $(RGBLINKFLAGS) $^ -o $@
 	$(RGBFIX) $(RGBFIXFLAGS) $@
 
-src/intro/intro_main.o: src/intro/intro_main.asm $(INC) $(INTRO_1BPP)
+src/intro/intro_copy.o: src/intro/intro_copy.asm $(INC) $(INTRO_INC) $(INTRO_1BPP) $(INTRO_2BPP)
 
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
@@ -102,6 +110,9 @@ src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 
 art/intro/%.1bpp: art/intro/%.png
 	$(RGBGFX) -Z -d1 $< -o $@
+
+art/intro/%.2bpp: art/intro/%_gray.png
+	$(RGBGFX) -c gbc:art/gray.pal $< -o $@
 
 art/compo/compo_logo.2bpp: art/compo/compo_logo.png
 	$(RGBGFX) -u $< -o $@ -T

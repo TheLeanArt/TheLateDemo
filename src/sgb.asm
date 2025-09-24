@@ -3,8 +3,8 @@
 ; Copyright (c) 2023 zlago
 
 include "hardware.inc"
-include "sgb.inc"
 include "common.inc"
+include "sgb.inc"
 
 
 MACRO SEND_BIT
@@ -15,6 +15,28 @@ MACRO SEND_BIT
 ENDM
 
 SECTION "SGB_SendPacket", ROM0
+SGB_Freeze::
+	ld hl, FreezeSGB
+	jr SGB_SendPacket
+
+SGB_TryFreeze::
+	ld hl, FreezeSGB
+	jr SGB_TrySendPacket
+
+SGB_Unfreeze::
+	ld hl, UnfreezeSGB
+	jr SGB_SendPacket
+
+SGB_TryUnfreeze::
+	ld hl, UnfreezeSGB
+	; Fall through
+
+SGB_TrySendPacket::
+	ldh a, [hFlags]
+	cp FLAGS_SGB
+	ret nz
+	; Fall through
+
 SGB_SendPacket::
 	ld bc, SGB_PACKET_SIZE << 8 | LOW(rP1)
 	xor a               ; start bit
@@ -115,3 +137,17 @@ SGB_Wait2Frames:
 SGB_Wait1Frame:
 	halt
 	jp DoSound
+
+
+SECTION "FreezeSGB", ROM0
+FreezeSGB:
+	db SGB_MASK_EN | $01
+	db SGB_MASK_EN_MASK_FREEZE
+	ds 14
+
+
+SECTION "UnfreezeSGB", ROM0
+UnfreezeSGB:
+	db SGB_MASK_EN | $01
+	db SGB_MASK_EN_MASK_CANCEL
+	ds 14
