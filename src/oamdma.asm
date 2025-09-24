@@ -3,6 +3,9 @@
 
 
 include "hardware.inc"
+include "common.inc"
+include "color.inc"
+include "gradient.inc"
 
 
 SECTION "WaitVRAM", ROM0[$30]
@@ -28,7 +31,6 @@ VBlank::
 	push af
 	push bc
 	call hFixedOAMDMA
-	ld b, a
 	jr STAT.cont
 
 
@@ -37,9 +39,9 @@ STAT:
 	push af
 	push bc
 	ldh a, [rLYC]
-	ld b, a
-	add 8
 .cont
+	ld b, a
+	add GRADIENT_STEP
 	ldh [rLYC], a
 	rst WaitVRAM
 	ld c, LOW(rBGPI)
@@ -51,10 +53,7 @@ STAT:
 	ld a, [hColorHigh]
 	ldh [c], a
 	ld a, b
-	rrca
-	rrca
-	rrca
-	and $1E
+	and $FE
 	ld c, a
 	ld b, HIGH(ColorLUT)
 	ld a, [bc]
@@ -69,8 +68,11 @@ STAT:
 
 SECTION "ColorLUT", ROM0, ALIGN[8]
 ColorLUT:
-FOR I, 28, 0, -1
-	dw %11111 << 10 | I << 5 | %11100
+FOR I, GRADIENT_LENGTH
+	INTER_COLOR C_GRADIENT_TOP, C_GRADIENT_BOTTOM, GRADIENT_LENGTH, I
+ENDR
+REPT GRADIENT_PADDING
+	dw C_GRADIENT_BOTTOM
 ENDR
 
 

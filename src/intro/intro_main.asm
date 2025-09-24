@@ -5,6 +5,7 @@
 include "hardware.inc"
 include "common.inc"
 include "intro.inc"
+include "gradient.inc"
 include "sgb.inc"
 
 
@@ -70,8 +71,16 @@ Intro::
 	ldh [rOBP1], a             ; Set the alternate object palette
 	dec a                      ; Set A to $FF
 	ldh [rOBP0], a             ; Set the default object palette
-	ldh [hColorLow], a         ; Set the background color
-	ldh [hColorHigh], a        ; ...
+
+IF LOW(C_GRADIENT_TOP) != $FF
+	ld a, LOW(C_GRADIENT_TOP)
+ENDC
+	ldh [hColorLow], a         ; Set background color' s lower byte
+
+IF HIGH(C_GRADIENT_TOP) != LOW(C_GRADIENT_TOP)
+	ld a, HIGH(C_GRADIENT_TOP)
+ENDC
+	ldh [hColorHigh], a        ; Set background color' s upper byte
 
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank and STAT interrupts into A
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
@@ -569,7 +578,7 @@ IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK
 SECTION "FadeOutSGBLUT", ROMX, ALIGN[1]
 FadeOutSGBLUT:
 DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
-FOR I, 0, FADEOUT_LENGTH
+FOR I, FADEOUT_LENGTH
 	INTER_COLOR C_INTRO_BOTTOM_SGB, C_INTRO_BACK_SGB, FADEOUT_LENGTH, I
 ENDR
 
