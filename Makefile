@@ -14,6 +14,7 @@ RGBASMFLAGS  = -I inc -I art
 
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 	-D INTRO_SONG=song_ending \
+	-D GRADIENT \
 	-D COLOR8 \
 	-D FADEOUT \
 	-D FADEOUT_START=48 \
@@ -23,7 +24,10 @@ RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 RGBASMFLAGS_COMPO = $(RGBASMFLAGS) -I art/compo -I art/compo/border \
 	-D _COMPO_BTN=$(T_COMPO_BTN) \
 	-D _COMPO_EMPTY=$(T_COMPO_EMPTY) \
-	-D _COMPO_OBJ=$(T_COMPO_OBJ) \
+	-D _COMPO_OBJ=$(T_COMPO_OBJ)
+
+RGBASMFLAGS_OAMDMA = $(RGBASMFLAGS) \
+	-D C_GRADIENT_BOTTOM=C_LILAC \
 
 T_COMPO_BTN = 3F
 T_COMPO_TXT = 40
@@ -47,6 +51,7 @@ INC = \
 	inc/hardware.inc \
 	inc/sgb.inc \
 	inc/common.inc \
+	inc/gradient.inc \
 
 INTRO_INC = \
 	inc/intro.inc \
@@ -111,6 +116,9 @@ src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 
 src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 	$(RGBASM) $(RGBASMFLAGS_COMPO) $< -o $@
+
+src/oamdma.o: src/oamdma.asm $(INC)
+	$(RGBASM) $(RGBASMFLAGS_OAMDMA) $< -o $@
 
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@

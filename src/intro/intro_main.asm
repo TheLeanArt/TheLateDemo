@@ -5,6 +5,7 @@
 include "hardware.inc"
 include "common.inc"
 include "intro.inc"
+include "gradient.inc"
 include "sgb.inc"
 
 
@@ -66,17 +67,36 @@ Intro::
 	ld a, WX_OFS               ; Load the window's X value into A
 	ldh [rWX], a               ; Set the window's X coordinate
 
-	ld a, %11_11_11_00         ; Display everything as black
-	ldh [rOBP0], a             ; Set the default object palette
 	xor a                      ; Display everything as white
 	ldh [rOBP1], a             ; Set the alternate object palette
-	
-	ld a, IE_VBLANK            ; Load the flag to enable the VBlank and STAT interrupts into A
+	ldh [rLYC], a              ; Set which line to trigger the LY=LYC interrupt on
+
+	dec a                      ; Set A to $FF
+	ldh [rOBP0], a             ; Set the default object palette
+
+IF LOW(C_GRADIENT_TOP) != $FF
+	ld a, LOW(C_GRADIENT_TOP)
+ENDC
+	ldh [hColorLow], a         ; Set background color' s lower byte
+
+IF HIGH(C_GRADIENT_TOP) != LOW(C_GRADIENT_TOP)
+	ld a, HIGH(C_GRADIENT_TOP)
+ENDC
+	ldh [hColorHigh], a        ; Set background color' s upper byte
+
+IF DEF(GRADIENT)
+	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
+	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
+	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+ELSE
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+ENDC
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
 	xor a                      ; Set A to zero
 	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
 
-	call VBlank                ; Perform our OAM DMA and enable interrupts!
+	call hFixedOAMDMA          ; Perform our OAM DMA
+	ei                         ; Enable interrupts!
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_OBJ_16 | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
@@ -566,7 +586,7 @@ IF C_INTRO_BOTTOM_SGB != C_INTRO_BOTTOM || C_INTRO_BACK_SGB != C_INTRO_BACK
 SECTION "FadeOutSGBLUT", ROMX, ALIGN[1]
 FadeOutSGBLUT:
 DEF FADEOUT_MAX = (FADEOUT_LENGTH - 1)
-FOR I, 0, FADEOUT_LENGTH
+FOR I, FADEOUT_LENGTH
 	INTER_COLOR C_INTRO_BOTTOM_SGB, C_INTRO_BACK_SGB, FADEOUT_LENGTH, I
 ENDR
 
