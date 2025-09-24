@@ -87,7 +87,10 @@ ENDC
 IF DEF(GRADIENT)
 	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
 	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
-	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+ASSERT (FLAGS_GBC == IE_STAT)
+	ldh a, [hFlags]            ; Load our flags into the A register
+	and FLAGS_GBC              ; Enable the STAT interrupt iff the GBC flag is set
+	or IE_VBLANK               ; Enable the VBlank interrupt
 ELSE
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
 ENDC
