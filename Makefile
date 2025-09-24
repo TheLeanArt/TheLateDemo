@@ -14,6 +14,7 @@ RGBASMFLAGS  = -I inc -I art
 
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro \
 	-D INTRO_SONG=song_ending \
+	-D GRADIENT \
 	-D COLOR8 \
 	-D FADEOUT \
 	-D FADEOUT_START=48 \
