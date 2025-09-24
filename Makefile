@@ -65,6 +65,9 @@ INTRO_2BPP = \
 	art/intro/intro_top_0.2bpp \
 	art/intro/intro_by.2bpp \
 
+COMPO_INC = \
+	inc/compo.inc \
+
 COMPO_2BPP = \
 	art/compo/compo_logo.2bpp \
 	art/compo/compo_logo_gbc.2bpp \
@@ -102,7 +105,7 @@ src/intro/intro_copy.o: src/intro/intro_copy.asm $(INC) $(INTRO_INC) $(INTRO_1BP
 src/intro/%.o: src/intro/%.asm $(INC) $(INTRO_INC)
 	$(RGBASM) $(RGBASMFLAGS_INTRO) $< -o $@
 
-src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
+src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_INC) $(COMPO_2BPP) $(COMPO_BORDER)
 	$(RGBASM) $(RGBASMFLAGS_COMPO) $< -o $@
 
 %.o: %.asm $(INC)
