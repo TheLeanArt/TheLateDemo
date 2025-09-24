@@ -3,29 +3,30 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 
-DEF tCompoBtn    EQUS "${T_COMPO_BTN}"
-DEF pCompoBtn    EQU    1
-DEF yCompoBtn    EQU  111
-DEF xCompoBtn    EQU  187
+DEF T_COMPO_BTN    EQUS "${_COMPO_BTN}"
+DEF P_COMPO_BTN    EQU    1
+DEF Y_COMPO_BTN    EQU  111
+DEF X_COMPO_BTN    EQU  187
 
-DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
-DEF vCompoObj    EQU   35
+DEF T_COMPO_EMPTY  EQUS "${_COMPO_EMPTY}"
 
-DEF tCompoEmpty  EQU  $70
+DEF T_COMPO_OBJ    EQUS "${_COMPO_OBJ}"
+DEF V_COMPO_OBJ    EQU   35
+DEF Y_COMPO_OBJ    EQU   36
+DEF X_COMPO_OBJ    EQU  183
 
-DEF yCompoObj    EQU   36
-DEF xCompoObj    EQU  183
-DEF yCompoDelta  EQU   64
-DEF xCompoDelta  EQU   64
+DEF Y_COMPO_DELTA  EQU   64
+DEF X_COMPO_DELTA  EQU   64
 
-DEF yCompoBottom EQU yCompoObj + yCompoDelta
-DEF xCompoRight  EQU xCompoObj + xCompoDelta
+DEF Y_COMPO_BOTTOM EQU Y_COMPO_OBJ + Y_COMPO_DELTA
+DEF X_COMPO_RIGHT  EQU X_COMPO_OBJ + X_COMPO_DELTA
 
-DEF yCompoInit1  EQU   -4
-DEF xCompoInit1  EQU -160
-DEF yCompoWin2   EQU    4
-DEF xCompoWin2   EQU  152 + WX_OFS
+DEF Y_COMPO_INIT1  EQU   -4
+DEF X_COMPO_INIT1  EQU -160
 
-DEF xCompoStop1  EQU  -64
-DEF xCompoStop2  EQU   88
-DEF xCompoStop3  EQU   96
+DEF Y_COMPO_WIN2   EQU    4
+DEF X_COMPO_WIN2   EQU  152 + WX_OFS
+
+DEF X_COMPO_STOP1  EQU  -64
+DEF X_COMPO_STOP2  EQU   88
+DEF X_COMPO_STOP3  EQU   96
