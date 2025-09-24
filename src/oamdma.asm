@@ -5,14 +5,6 @@
 include "hardware.inc"
 
 
-SECTION "ScreenOff", ROM0[$00]
-ScreenOff::
-	rst WaitVBlank
-	xor a
-	ldh [rLCDC], a
-	ret
-
-
 SECTION "WaitVRAM", ROM0[$30]
 WaitVRAM::
 	ldh a, [rSTAT]             ; Check the STAT register to figure out which mode the LCD is in
@@ -82,27 +74,47 @@ FOR I, 28, 0, -1
 ENDR
 
 
-SECTION "Fixed OAM DMA Subroutine", ROM0
-
-FixedOAMDMA::
-	ld a, HIGH(wShadowOAM)
-    ldh [rDMA], a
-    ld a, OAM_COUNT
+SECTION "CopyOAMDMA", ROM0
+CopyOAMDMA::
+	ld bc, (FixedOAMDMA.end - FixedOAMDMA) << 8 | LOW(hFixedOAMDMA)
+	ld hl, FixedOAMDMA         ; Load the source address of our routine into HL
 .loop
-    dec a
-    jr nz, .loop
-    ret
+	ld a, [hli]                ; Load a byte from the address HL points to into the register A, increment HL
+	ldh [c], a                 ; Load the byte in the A register to the address in HRAM with the low byte stored in C
+	inc c                      ; Increment the low byte of the HRAM pointer in C
+	dec b                      ; Decrement the loop counter in B
+	jr nz, .loop               ; If B isn't zero, continue looping
+	ret
+
+
+SECTION "ClearOAM", ROM0
+ClearOAM::
+	xor a                      ; Set A to zero
+	ld [hli], a                ; Set and advance
+	ld a, l                    ; Load the lower address byte into A
+	cp OAM_SIZE                ; End of OAM reached?
+	jr nz, ClearOAM            ; If not, continue looping
+	ret
+
+
+SECTION "Fixed OAM DMA Subroutine", ROM0
+FixedOAMDMA:
+	ld a, HIGH(wShadowOAM)
+	ldh [rDMA], a
+	ld a, OAM_COUNT
+.loop
+	dec a
+	jr nz, .loop
+	ret
 .end::
 
 
 SECTION "OAM DMA", HRAM
-
 hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
 
 
-SECTION FRAGMENT "HRAM", HRAM
-
+SECTION "Current Color", HRAM
 hColorLow::
 	db
 hColorHigh::
@@ -110,6 +122,5 @@ hColorHigh::
 
 
 SECTION "Shadow OAM", WRAM0, ALIGN[8]
-
 wShadowOAM::
 	ds OAM_SIZE

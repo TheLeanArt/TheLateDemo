@@ -3,36 +3,9 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 include "hardware.inc"
-include "sgb.inc"
 include "common.inc"
-
-
-DEF tCompoBtn    EQUS "${T_COMPO_BTN}"
-DEF pCompoBtn    EQU    1
-DEF yCompoBtn    EQU  111
-DEF xCompoBtn    EQU  187
-
-DEF tCompoObj    EQUS "${T_COMPO_OBJ}"
-DEF vCompoObj    EQU   35
-
-DEF tCompoEmpty  EQU  $70
-
-DEF yCompoObj    EQU   36
-DEF xCompoObj    EQU  183
-DEF yCompoDelta  EQU   64
-DEF xCompoDelta  EQU   64
-
-DEF yCompoBottom EQU yCompoObj + yCompoDelta
-DEF xCompoRight  EQU xCompoObj + xCompoDelta
-
-DEF yCompoInit1  EQU   -4
-DEF xCompoInit1  EQU -160
-DEF yCompoWin2   EQU    4
-DEF xCompoWin2   EQU  152 + WX_OFS
-
-DEF xCompoStop1  EQU  -64
-DEF xCompoStop2  EQU   88
-DEF xCompoStop3  EQU   96
+include "compo.inc"
+include "sgb.inc"
 
 
 SECTION "Compo", ROM0
@@ -63,10 +36,7 @@ Compo::
 	rst ScreenOff
 	call CopyCompo
 
-	ldh a, [hFlags]
-	bit B_FLAGS_SGB, a
-	ld hl, UnfreezeSGB
-	call nz, SGB_SendPacket
+	call SGB_TryUnfreeze
 
 	ld a, BANK(song_ending)
 	ld [rROMB0], a
@@ -79,13 +49,13 @@ Compo::
 .copyObjs
 	ld bc, CompoObjMap
 	ld hl, wShadowOAM
-	ld d, yCompoObj
+	ld d, Y_COMPO_OBJ
 .loop1
-	ld e, xCompoObj
+	ld e, X_COMPO_OBJ
 .loop2
 	ld a, [bc]
 	inc c
-	cp tCompoObj
+	cp T_COMPO_OBJ
 	jr z, .skipDisp
 
 .addDisp
@@ -102,12 +72,12 @@ Compo::
 	ld e, a                    ; Load the value in A into E
 
 .cont1
-	cp xCompoRight             ; Right edge reached?
+	cp X_COMPO_RIGHT           ; Right edge reached?
 	jr nz, .loop2              ; If not, keep looping
 	ld a, d                    ; Load the value in D into A
 	add TILE_HEIGHT            ; Add tile height
 	ld d, a                    ; Load the value in A into D
-	cp yCompoBottom            ; Bottom edge reached?
+	cp Y_COMPO_BOTTOM          ; Bottom edge reached?
 	jr nz, .loop1              ; If not, keep looping
 
 	ldh a, [hFlags]            ; Load flags
@@ -115,8 +85,8 @@ Compo::
 	jr z, .cont2               ; If not, skip
 
 .addBtns
-	ld bc, tCompoBtn << 8 | pCompoBtn
-	ld de, yCompoBtn << 8 | xCompoBtn
+	ld bc, T_COMPO_BTN << 8 | P_COMPO_BTN
+	ld de, Y_COMPO_BTN << 8 | X_COMPO_BTN
 	call SetObject16           ; Set button B object
 	dec b                      ; Restore tile ID
 	dec b                      ; ...
@@ -129,28 +99,28 @@ Compo::
 	ld e, l
 
 .compo1
-	ld a, yCompoInit1
+	ld a, Y_COMPO_INIT1
 	ldh [rSCY], a
-	ld a, xCompoInit1
+	ld a, X_COMPO_INIT1
 	ldh [rSCX], a
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON
-	ld d, xCompoStop1
+	ld d, X_COMPO_STOP1
 	call LoopCompo
 
 .compo2
-	ld a, yCompoWin2
+	ld a, Y_COMPO_WIN2
 	ldh [rWY], a
-	ld a, xCompoWin2
+	ld a, X_COMPO_WIN2
 	ldh [rWX], a
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
-	ld d, xCompoStop2
+	ld d, X_COMPO_STOP2
 	call LoopCompo
 
 .compo3
 	xor a
 	ldh [rSCX], a
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_BG_9C00
-	ld d, xCompoStop3
+	ld d, X_COMPO_STOP3
 	call LoopCompo
 
 	jr .compo0
@@ -178,13 +148,13 @@ LoopCompo:
 .loop4
 	ld a, [bc]
 	inc c
-	cp tCompoObj
+	cp T_COMPO_OBJ
 	jr z, .loop4
 	ld [hl], a
 	ld a, l
 	add OBJ_SIZE
 	ld l, a
-	cp vCompoObj * OBJ_SIZE + OAMA_TILEID
+	cp V_COMPO_OBJ * OBJ_SIZE + OAMA_TILEID
 	jr nz, .loop4
 	ld l, OAMA_X
 	jr .loop5
@@ -292,8 +262,7 @@ ClearShort:
 SECTION "InitSGB", ROM0
 InitSGB:
 	call SGB_InitVRAM
-	ld hl, FreezeSGB
-	call SGB_SendPacket
+	call SGB_Freeze
 	rst ScreenOff
 	ld hl, STARTOF(VRAM)
 	ld c, 32
@@ -314,7 +283,7 @@ ClearVRAM:
 	ld hl, TILEMAP0
 .loop
 	rst WaitVRAM
-	ld a, tCompoEmpty
+	ld a, T_COMPO_EMPTY
 	ld [hli], a
 	bit 2, h
 	jr z, .loop
@@ -469,20 +438,6 @@ CompoPaletteSGB:
 	db 0
 
 
-SECTION "FreezeSGB", ROMX, BANK[BANK_COMPO]
-FreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_FREEZE
-	ds 14
-
-
-SECTION "UnfreezeSGB", ROMX, BANK[BANK_COMPO]
-UnfreezeSGB:
-	db SGB_MASK_EN | $01
-	db SGB_MASK_EN_MASK_CANCEL
-	ds 14
-
-
-SECTION FRAGMENT "HRAM", HRAM
+SECTION "HRAM", HRAM
 hFrameCount:
 	ds 1
