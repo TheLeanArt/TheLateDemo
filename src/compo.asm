@@ -6,6 +6,7 @@ include "hardware.inc"
 include "common.inc"
 include "defs.inc"
 include "compo.inc"
+include "gradient.inc"
 include "sgb.inc"
 
 
@@ -322,6 +323,20 @@ InitGBC:
 	call GBC_SetPalettes
 	ld a, OPRI_COORD
 	ldh [c], a
+
+IF DEF(GRADIENT)
+	ld de, CompoColorLUT       ; Load the address of the color LUT into DE
+	call CopyColorLUT          ; Copy color LUT
+	xor a                      ; Set A to zero
+	ldh [rLYC], a              ; Set which line to trigger the LY=LYC interrupt on
+	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
+	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
+	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
+	xor a                      ; Set A to zero
+	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
+ENDC
+
 	jr DoSound2
 
 
@@ -329,6 +344,20 @@ SECTION "CompoObjMap", ROMX, BANK[BANK_INIT], ALIGN[8]
 CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 .end
+
+
+IF DEF(GRADIENT)
+
+SECTION "CompoColorLUT", ROMX, BANK[BANK_COMPO]
+CompoColorLUT:
+FOR I, GRADIENT_LENGTH
+	INTER_COLOR C_GRADIENT_TOP, C_GRADIENT_BOTTOM, GRADIENT_LENGTH, I
+ENDR
+REPT GRADIENT_PADDING
+	dw C_GRADIENT_BOTTOM
+ENDR
+
+ENDC
 
 
 SECTION "CompoTiles", ROMX[$4000], BANK[BANK_COMPO]

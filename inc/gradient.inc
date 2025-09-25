@@ -5,6 +5,10 @@
 
 include "color.inc"
 
+IF DEF(INTRO_GRADIENT)
+	DEF GRADIENT             EQUS ""
+ENDC
+
 IF !DEF(GRADIENT_STEP)
 	DEF GRADIENT_STEP        EQU  8
 ENDC

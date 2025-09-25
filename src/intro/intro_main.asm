@@ -101,6 +101,8 @@ IF HIGH(C_GRADIENT_TOP) != LOW(C_GRADIENT_TOP)
 ENDC
 	ldh [hColorHigh], a        ; Set background color's upper byte
 
+IF DEF(INTRO_GRADIENT)
+
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
 	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
@@ -108,6 +110,14 @@ ENDC
 	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
 	ldh [rSTAT], a             ; Load the prepared flag into rSTAT to enable the LY=LYC interrupt source 
 	ld a, IE_VBLANK | IE_STAT  ; Load the flag to enable the VBlank and STAT interrupts into A
+
+ELSE
+
+	ld de, C_INTRO_BACK        ; Load the background color into DE
+	call InitColorLUT          ; Initialize color LUT
+	ld a, IE_VBLANK            ; Load the flag to enable the VBlank interrupt into A
+
+ENDC
 
 ELSE
 
