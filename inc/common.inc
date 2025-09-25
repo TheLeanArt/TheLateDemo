@@ -19,12 +19,6 @@ DEF FLAGS_DMG0           EQU   1 << B_FLAGS_DMG0
 
 DEF FLAGS_MASK           EQU   FLAGS_SGB | FLAGS_GBC
 
-DEF BANK_INIT            EQU   1
-DEF BANK_COMPO           EQU   2
-
-DEF C_LILAC              EQU %0_11111_10110_11011
-DEF C_LILAC_SGB          EQU %0_11111_11011_11100
-
 
 ; Adapted from Simple GB ASM Examples by Dave VanEe
 ; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)

@@ -4,6 +4,7 @@
 
 include "hardware.inc"
 include "common.inc"
+include "defs.inc"
 
 
 SECTION "ScreenOff", ROM0[$00]

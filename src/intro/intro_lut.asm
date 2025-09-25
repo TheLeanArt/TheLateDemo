@@ -3,6 +3,7 @@
 ; Copyright (c) 2025 Dmitry Shechtman
 
 include "hardware.inc"
+include "defs.inc"
 include "intro.inc"
 
 
@@ -234,10 +235,10 @@ O_LUT:
 FOR I, 0, 2
 
 .y\@
-FOR T, 0, 72
+FOR T, 0, 96
 	db LOW(Y_INTRO_BOTTOM + T * 4)
 ENDR
-	ds 56, 0
+	ds 32, 0
 
 .x\@
 FOR T, 0, 128

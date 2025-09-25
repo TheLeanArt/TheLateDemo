@@ -4,6 +4,7 @@
 
 include "hardware.inc"
 include "common.inc"
+include "defs.inc"
 include "intro.inc"
 include "gradient.inc"
 include "sgb.inc"
@@ -77,12 +78,12 @@ Intro::
 IF LOW(C_GRADIENT_TOP) != $FF
 	ld a, LOW(C_GRADIENT_TOP)
 ENDC
-	ldh [hColorLow], a         ; Set background color' s lower byte
+	ldh [hColorLow], a         ; Set background color's lower byte
 
 IF HIGH(C_GRADIENT_TOP) != LOW(C_GRADIENT_TOP)
 	ld a, HIGH(C_GRADIENT_TOP)
 ENDC
-	ldh [hColorHigh], a        ; Set background color' s upper byte
+	ldh [hColorHigh], a        ; Set background color's upper byte
 
 IF DEF(GRADIENT)
 	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
