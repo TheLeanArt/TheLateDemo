@@ -35,11 +35,15 @@ ENDM
 
 MACRO INTRO_TOP_INIT
 DEF _ = (\1 - 1)
-IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 2
+IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 1
 	ld b, T_INTRO_TOP_\1       ; Load tile ID
 ENDC
+IF \1 && X_INTRO_TOP_\1 == X_INTRO_TOP_{d:_} + INTRO_TOP_NORM_WIDTH
+	call SetNextTopObject      ; Set the next object
+ELSE
 	ld e, X_INTRO_TOP_\1       ; Load X coordinate
 	call SetObject             ; Set the object
+ENDC
 ENDM
 
 MACRO INTRO_BOTTOM_INIT
@@ -496,12 +500,20 @@ ENDR
 	; Fall through
 
 InitReg:
+IF T_INTRO_REG != T_INTRO_TOP_7
 	ld b, T_INTRO_REG          ; Load tile ID
-	ld de, Y_INTRO_REG << 8 | X_INTRO_REG
+ENDC
+	                           ; Compensate for width adjustment
+	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	and FLAGS_DMG0             ; Isolate the DMG0 flag
 	ld c, a                    ; Load attributes
+	; Fall through
+
+SetNextTopObject:
+	dec e                      ; Adjust width
+	dec e                      ; ...
 	; Fall through
 
 SetObject::
