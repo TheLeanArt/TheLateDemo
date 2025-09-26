@@ -64,7 +64,7 @@ Compo::
 	push bc                    ; Save the current map address
 	ld b, a                    ; Load tile ID
 	ld c, 0                    ; Load attributes
-	call SetObject16           ; Add display object
+	call SetObject             ; Add display object
 	pop bc                     ; Restore the current map address
 	jr .cont1                  ; Proceed to edge check
 
@@ -89,11 +89,10 @@ Compo::
 .addBtns
 	ld bc, T_COMPO_BTN << 8 | P_COMPO_BTN
 	ld de, Y_COMPO_BTN << 8 | X_COMPO_BTN
-	call SetObject16           ; Set button B object
+	call SetObject             ; Set button B object
 	dec b                      ; Restore tile ID
-	dec b                      ; ...
 	inc e                      ; Advance X
-	call SetObject16           ; Set button A object
+	call SetObject             ; Set button A object
 
 .cont2
 	call hFixedOAMDMA
@@ -204,9 +203,7 @@ CopyCompo:
 	call MemCopy
 
 .text
-	ld de, CompoTextTiles
-	ld bc, CompoTextTiles.end - CompoTextTiles
-	call MemCopy
+	MEM_COPY CompoTextTiles
 
 .obj
 	ld de, CompoObjTiles
@@ -269,9 +266,7 @@ InitSGB:
 	ld hl, STARTOF(VRAM)
 	ld c, 32
 	call ClearShort
-	ld bc, BorderTilesSGB.end - BorderTilesSGB
-	ld de, BorderTilesSGB
-	call MemCopy
+	MEM_COPY BorderTilesSGB
 	call SGB_SendBorder.cont
 	ld bc, BorderSGB.end - BorderSGB
 	ld de, BorderSGB
