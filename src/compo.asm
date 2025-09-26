@@ -324,9 +324,11 @@ InitGBC:
 	ld a, OPRI_COORD
 	ldh [c], a
 
-IF DEF(GRADIENT)
-	ld de, CompoColorLUT       ; Load the address of the color LUT into DE
-	call CopyColorLUT          ; Copy color LUT
+IF DEF(COMPO_GRADIENT)
+	ld de, CompoColorLUT       ; Load the address of our color LUT into DE
+	call CopyColorLUT          ; Copy the color LUT
+
+IF !DEF(INTRO_GRADIENT)
 	xor a                      ; Set A to zero
 	ldh [rLYC], a              ; Set which line to trigger the LY=LYC interrupt on
 	ld a, STAT_LYC             ; Load the flag to enable LYC STAT interrupts into A
@@ -335,6 +337,8 @@ IF DEF(GRADIENT)
 	ldh [rIE], a               ; Load the prepared flag into the interrupt enable register
 	xor a                      ; Set A to zero
 	ldh [rIF], a               ; Clear any lingering flags from the interrupt flag register to avoid false interrupts
+ENDC
+
 ENDC
 
 	jr DoSound2
@@ -346,16 +350,11 @@ CompoObjMap:
 .end
 
 
-IF DEF(GRADIENT)
+IF DEF(COMPO_GRADIENT)
 
 SECTION "CompoColorLUT", ROMX, BANK[BANK_COMPO]
 CompoColorLUT:
-FOR I, GRADIENT_LENGTH
-	INTER_COLOR C_GRADIENT_TOP, C_GRADIENT_BOTTOM, GRADIENT_LENGTH, I
-ENDR
-REPT GRADIENT_PADDING
-	dw C_GRADIENT_BOTTOM
-ENDR
+	GRADIENT_LUT C_COMPO_GRADIENT_TOP, C_COMPO_GRADIENT_BOTTOM
 
 ENDC
 
