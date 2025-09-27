@@ -5,7 +5,7 @@
 
 include "hUGE.inc"
 
-SECTION "Ending Song Data", ROMX
+SECTION "Ending Song Data", ROM0
 
 song_ending::
 db 4

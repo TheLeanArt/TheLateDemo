@@ -13,8 +13,6 @@ include "sgb.inc"
 SECTION "Compo", ROM0
 
 Compo::
-	call SetBank
-
 	ldh a, [hFlags]
 	bit B_FLAGS_GBC, a
 	jr z, .nonGBC
@@ -40,8 +38,6 @@ Compo::
 
 	call SGB_TryUnfreeze
 
-	ld a, BANK(song_ending)
-	ld [rROMB0], a
 	call hUGE_dosound
 
 .compo0
@@ -273,8 +269,7 @@ InitSGB:
 	call SGB_SendBorder
 	call ClearVRAM
 	ld hl, CompoPaletteSGB
-	call SGB_SendPacket
-	jr SetBank
+	jp SGB_SendPacket
 
 ClearVRAM:
 	ld hl, TILEMAP0
@@ -295,15 +290,7 @@ DoSound2::
 	; Fall through
 
 DoSound::
-	ld a, BANK(song_ending)
-	ld [rROMB0], a
-	call hUGE_dosound
-	; Fall through
-
-SetBank:
-	ld a, BANK_COMPO
-	ld [rROMB0], a
-	ret
+	jp hUGE_dosound
 
 
 InitGBC:
@@ -339,7 +326,7 @@ ENDC
 	jr DoSound2
 
 
-SECTION "CompoObjMap", ROMX, BANK[BANK_INIT], ALIGN[8]
+SECTION "CompoObjMap", ROMX, ALIGN[8]
 CompoObjMap:
 	INCBIN "compo_obj.tilemap"
 .end
@@ -347,69 +334,69 @@ CompoObjMap:
 
 IF DEF(COMPO_GRADIENT)
 
-SECTION "CompoColorLUT", ROMX, BANK[BANK_COMPO]
+SECTION "CompoColorLUT", ROMX
 CompoColorLUT:
 	GRADIENT_LUT C_COMPO_GRADIENT_TOP, C_COMPO_GRADIENT_BOTTOM
 
 ENDC
 
 
-SECTION "CompoTiles", ROMX[$4000], BANK[BANK_COMPO]
+SECTION "CompoTiles", ROMX[$4000]
 CompoTiles:
 	INCBIN "compo_logo.2bpp"
 .end
 
 
-SECTION "CompoTilesSGB", ROMX[$4400], BANK[BANK_COMPO]
+SECTION "CompoTilesSGB", ROMX[$4400]
 CompoTilesSGB:
 	INCBIN "compo_logo_sgb.2bpp"
 .end
 
 
-SECTION "CompoTilesGBC", ROMX[$4800], BANK[BANK_COMPO]
+SECTION "CompoTilesGBC", ROMX[$4800]
 CompoTilesGBC:
 	INCBIN "compo_logo_gbc.2bpp"
 	INCBIN "compo_button.2bpp"
 .end
 
 
-SECTION "CompoTextTiles", ROMX, BANK[BANK_COMPO]
+SECTION "CompoTextTiles", ROMX
 CompoTextTiles:
 	INCBIN "compo_text.2bpp"
 .end
 
 
-SECTION "CompoObjTiles", ROMX, BANK[BANK_COMPO]
+SECTION "CompoObjTiles", ROMX
 CompoObjTiles:
 	INCBIN "compo_obj.2bpp"
 .end
 
 
-SECTION "CompoObjTilesSGB", ROMX, BANK[BANK_COMPO]
+SECTION "CompoObjTilesSGB", ROMX
 CompoObjTilesSGB:
 	INCBIN "compo_obj_sgb.2bpp"
 .end
 
 
-SECTION "CompoLogoMap", ROMX, BANK[BANK_COMPO]
+SECTION "CompoLogoMap", ROMX
 CompoLogoMap:
 	INCBIN "compo_logo.tilemap"
 .end
 
 
-SECTION "CompoLogoMapGBC", ROMX, BANK[BANK_COMPO]
+SECTION "CompoLogoMapGBC", ROMX
 CompoLogoMapGBC:
 	INCBIN "compo_logo_gbc.tilemap"
 .end
 
 
-SECTION "CompoTextMap", ROMX, BANK[BANK_COMPO]
+SECTION "CompoTextMap", ROMX
 CompoTextMap:
 	INCBIN "compo_text.tilemap"
 .end
 
 
-SECTION "CompoPaletteGBC", ROMX, BANK[BANK_COMPO]
+SECTION "CompoPaletteGBC", ROMX
 CompoPaletteGBC:
 	dw C_LILAC
 	INCBIN "compo_logo_gbc.pal", 2, 6
@@ -418,7 +405,7 @@ CompoPaletteGBC:
 	INCBIN "compo_button_gbc.pal"
 
 
-SECTION "CompoPaletteGBA", ROMX, BANK[BANK_COMPO]
+SECTION "CompoPaletteGBA", ROMX
 CompoPaletteGBA:
 	dw C_LILAC_SGB
 	INCBIN "compo_logo.pal", 2, 6
@@ -427,7 +414,7 @@ CompoPaletteGBA:
 	INCBIN "compo_button.pal"
 
 
-SECTION "BorderTilesSGB", ROMX, BANK[BANK_COMPO]
+SECTION "BorderTilesSGB", ROMX
 BorderTilesSGB:
 	INCBIN "compo_border.4bpp", 32
 .end
@@ -436,7 +423,7 @@ ChrTrn1SGB:
 	ds 15, 0
 
 
-SECTION "BorderSGB", ROMX, BANK[BANK_COMPO]
+SECTION "BorderSGB", ROM0
 BorderSGB:
 	INCBIN "compo_border.tilemap"
 .end
@@ -447,7 +434,7 @@ PctTrnSGB:
 	ds 15, 0
 
 
-SECTION "CompoPaletteSGB", ROMX, BANK[BANK_COMPO]
+SECTION "CompoPaletteSGB", ROM0
 CompoPaletteSGB:
 	db SGB_PAL01 | $01
 	dw C_LILAC_SGB

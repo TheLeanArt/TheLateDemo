@@ -9,7 +9,7 @@ TARGET = latedemo_$(VER).gbc
 SYM = latedemo_$(VER).sym
 
 RGBLINKFLAGS = -n $(SYM)
-RGBFIXFLAGS  = -v -p 0xFF -m MBC1 -t $(TITLE) -c --sgb-compatible --old-licensee 0x33
+RGBFIXFLAGS  = -v -p 0xFF -t $(TITLE) -c --sgb-compatible --old-licensee 0x33
 RGBASMFLAGS  = -I inc -I art
 
 RGBASMFLAGS_INTRO = $(RGBASMFLAGS) -I art/intro

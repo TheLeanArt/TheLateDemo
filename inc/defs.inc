@@ -7,9 +7,6 @@ include "color.inc"
 
 DEF STACK_SIZE              EQU  32
 
-DEF BANK_INIT               EQU   1
-DEF BANK_COMPO              EQU   2
-
 DEF C_LILAC                 EQU %0_11111_10110_11011
 DEF C_LILAC_SGB             EQU %0_11111_11011_11100
 
