@@ -5,6 +5,8 @@
 include "color.inc"
 
 
+DEF STACK_SIZE              EQU  32
+
 DEF BANK_INIT               EQU   1
 DEF BANK_COMPO              EQU   2
 

@@ -26,7 +26,7 @@ SECTION "Start", ROM0[$0100]
 
 SECTION "EntryPoint", ROM0
 EntryPoint:
-	ld sp, $E000               ; Set the stack pointer to the end of WRAM
+	ld sp, wStack.end          ; Set the stack pointer to the end of WRAM
 
 	ld d, FLAGS_DMG            ; Set flags to DMG
 	cp BOOTUP_A_CGB            ; Are we running on GBC/GBA?
@@ -68,7 +68,14 @@ EntryPoint:
 
 	jp Compo                   ; Proceed to compo animation
 
+
 SECTION "Flags", HRAM
 
 hFlags::
 	ds 1
+
+
+SECTION "Stack", WRAMX[$E000 - STACK_SIZE]
+wStack:
+	ds STACK_SIZE
+.end
