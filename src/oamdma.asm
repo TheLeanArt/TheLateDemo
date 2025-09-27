@@ -1,5 +1,6 @@
-; Adapted from Simple GB ASM Examples by Dave VanEe
-; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
+; Game Boy Color gradient
+;
+; Copyright (c) 2025 Dmitry Shechtman
 
 
 include "hardware.inc"
@@ -7,6 +8,9 @@ include "common.inc"
 include "defs.inc"
 include "gradient.inc"
 
+
+; Portions adapted from Simple GB ASM Examples by Dave VanEe
+; License: CC0 1.0 (https://creativecommons.org/publicdomain/zero/1.0/)
 
 SECTION "WaitVRAM", ROM0[$30]
 WaitVRAM::
