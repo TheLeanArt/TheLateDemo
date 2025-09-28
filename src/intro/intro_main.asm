@@ -14,14 +14,6 @@ MACRO INIT_VRAM_HL
 	ld hl, MAP_\1 + ROW_\1 * TILEMAP_WIDTH + COL_\1
 ENDM
 
-MACRO INTRO_DBL_INIT
-	INIT_VRAM_HL INTRO_\1      ; Load the double tile address into the HL register
-	ld a, T_INTRO_\1           ; Load left tile ID
-	ld [hli], a                ; Set left tile
-	inc a                      ; Increment tile ID
-	ld [hli], a                ; Set right tile
-ENDM
-
 MACRO INTRO_META_INIT
 	INIT_VRAM_HL INTRO_\1      ; Load the meta-tile address into the HL register
 	ld a, T_INTRO_\1           ; Load top left tile ID
@@ -86,7 +78,7 @@ Intro::
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	INTRO_DBL_INIT BY          ; Draw BY on the background
+	call InitBy                ; Draw BY on the background
 	
 	INIT_VRAM_HL LOGO2         ; Load the window logo address into the HL register
 	ld b, T_LOGO               ; Load the first tile index into the B register
@@ -249,7 +241,28 @@ ENDC
 
 	ld e, 0                    ; Use E as our step counter
 .mainLoop
+	ld l, e
+	sra l
+	res 0, l
+	ld h, HIGH(ByLUT)
+	ld a, [hli]
+	ld c, a
+	ld b, [hl]
+	ld d, TILE_SIZE * 3        ; Copy 3 tiles
+	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
 	rst WaitVBlank             ; Wait for the next VBlank
+
+.copyLoop
+	ld a, [bc]                 ; Load a byte from the address BC point to into A
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc bc                     ; Increment the source pointer in BC
+	dec d                      ; Decrement the loop counter in D
+	jr nz, .copyLoop           ; Stop if D is zero, otherwise keep looping
+
+IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+	call InitBy                ; Restore BY tile mapping
+ENDC
+	
 	ld d, HIGH(IntroLUT)       ; Set the upper address byte to the start of our LUT
 
 	INTRO_META_SET E           ; Update E's tiles
@@ -328,21 +341,18 @@ ENDC
 	ret
 
 
+SECTION "ByLUT", ROM0, ALIGN[8]
+ByLUT:
+FOR I, 32
+	dw ByTiles + I * 48
+ENDR
+
+
 SECTION "Intro Subroutines", ROM0
 IntroMain:
-	ld a, e                    ; Load t into A
-	srl a                      ; Divide by 2
-	ld c, a                    ; Store t/2 in C
-	srl c                      ; Divide by 2
-	srl c                      ; Divide by 2
-	sub c                      ; Subtract t/8
-	ld b, a                    ; Store t * 3/8 in B
-
 	ld hl, rSCX                ; Start from the background's X coordinate
-	ld a, e                    ; Load t into A
-	add c                      ; Add t/8
-	cpl                        ; Complement A
-	inc a                      ; Negate A
+	xor a                      ; Set A to zero
+	sub e                      ; Negate t
 	ld [hld], a                ; Set the background's X coordinate and move to Y
 	ld [hl], e                 ; Set the background's Y coordinate
 
@@ -356,6 +366,14 @@ IntroMain:
 	add X_INTRO_N2 - Y_INTRO_N2; Add initial X coordinate
 	ld [hl], a                 ; Set the window's X coordinate
 .cont
+
+	ld a, e                    ; Load t into A
+	srl a                      ; Divide by 2
+	ld c, a                    ; Store t/2 in C
+	srl c                      ; Divide by 2
+	srl c                      ; Divide by 2
+	sub c                      ; Subtract t/8
+	ld b, a                    ; Store t * 3/8 in B
 
 	ld a, X_INTRO_NOT          ; Load x_0 into A
 	sub e                      ; Subtract t
@@ -587,11 +605,8 @@ SetDoubleObject:
 Color8:
 
 IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
-	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
 	ld a, T_INTRO_BY_2         ; Load left tile ID
-	ld [hli], a                ; Set left tile
-	inc a                      ; Increment tile ID
-	ld [hli], a                ; Set right tile
+	call SetBy                 ; Update BY tile mapping
 ENDC
 
 IF DEF(COLOR8)
@@ -614,6 +629,19 @@ ENDC
 ENDR
 ENDC
 
+	ret
+
+InitBy:
+	ld a, T_INTRO_BY           ; Load left tile ID
+	; Fall through
+
+SetBy:
+	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
+	ld [hli], a                ; Set left tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set middle tile
+	inc a                      ; Increment tile ID
+	ld [hli], a                ; Set right tile
 	ret
 
 SetPalettes:

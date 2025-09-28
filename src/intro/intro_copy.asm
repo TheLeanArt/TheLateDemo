@@ -17,11 +17,13 @@ CopyIntro::
 IF DEF(COLOR8)
 	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
 	MEM_COPY TopTiles2
+	call FillSafe              ; Clear the last tile in the 1st row
 ELSE
 	ld de, TopTiles
 	ld hl, STARTOF(VRAM) | T_INTRO_NOT << 4
 ENDC
 	COPY_1BPP_PRE_SAFE Top     ; Copy ® + top tiles
+	call FillSafe              ; Clear the last tile in the 2nd row
 IF T_INTRO_N0 == T_INTRO_E + 32
 	ld bc, Intro2Tiles.end - Intro1Tiles
 ELSE
@@ -48,11 +50,20 @@ ENDR
 	ret
 
 
+SECTION "Intro Copy Subroutines", ROM0
+FillSafe:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	bit 4, l                   ; Even tile address reached?
+	jr nz, FillSafe            ; If not, keep looping
+	ret
+
+
 SECTION "Intro Tile data", ROM0, ALIGN[8]
 TopTiles2:
 	INCBIN "intro_not.2bpp"
 	INCBIN "intro_top_0.2bpp"
-	INCBIN "intro_by.2bpp"
+	INCBIN "intro_by.2bpp", 0, 32
 .end
 
 TopTiles:
@@ -87,4 +98,10 @@ ENDR
 FOR I, 0, 64, 2
 	INCBIN "intro_t.1bpp", I, 1
 ENDR
+.end
+
+
+SECTION "By tiles", ROM0
+ByTiles::
+	INCBIN "intro_by.2bpp"
 .end
