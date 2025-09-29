@@ -14,16 +14,13 @@ CopyIntro::
 	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
 	jr c, CopyIntro            ; Loop until the carry flag is set
 
-IF DEF(COLOR8)
 	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
 	MEM_COPY TopTiles2
 	call FillSafe              ; Clear the last tile in the 1st row
-ELSE
-	ld de, TopTiles
-	ld hl, STARTOF(VRAM) | T_INTRO_NOT << 4
-ENDC
 	COPY_1BPP_PRE_SAFE Top     ; Copy ® + top tiles
 	call FillSafe              ; Clear the last tile in the 2nd row
+
+	ld hl, STARTOF(VRAM) | T_INTRO_N << 4
 IF T_INTRO_N0 == T_INTRO_E + 32
 	ld bc, Intro2Tiles.end - Intro1Tiles
 ELSE
@@ -62,15 +59,15 @@ FillSafe:
 SECTION "Intro Tile data", ROM0, ALIGN[8]
 TopTiles2:
 	INCBIN "intro_not.2bpp"
+	INCBIN "intro_by.2bpp",  0, 16
 	INCBIN "intro_top_0.2bpp"
-	INCBIN "intro_by.2bpp", 0, 32
+	INCBIN "intro_by.2bpp", 16, 16
 .end
 
 TopTiles:
 	INCBIN "intro_not.1bpp"
 	INCBIN "intro_top.1bpp"
 	INCBIN "intro_reg.1bpp"
-	INCBIN "intro_by.1bpp"
 .end
 
 Intro1Tiles:
@@ -98,10 +95,4 @@ ENDR
 FOR I, 0, 64, 2
 	INCBIN "intro_t.1bpp", I, 1
 ENDR
-.end
-
-
-SECTION "By tiles", ROM0
-ByTiles::
-	INCBIN "intro_by.2bpp"
 .end

@@ -56,7 +56,7 @@ ENDC
 ENDM
 
 
-SECTION "Intro", ROM0
+SECTION FRAGMENT "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
@@ -211,10 +211,10 @@ ENDC
 	ld [hl], a                 ; Set the new attributes
 .regDone
 
+IF DEF(COLOR8)
 
-IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM || DEF(COLOR8)
-
-	bit B_FLAGS_GBC, c         ; Are we running on GBC?
+	ldh a, [hFlags]            ; Load our flags into the A register
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
 	jr z, .dropDone            ; If not, proceed to prevent lag
 	ld a, e                    ; Load the value in E into A
 	cp COLOR8_STEP             ; Coloration step reached?
@@ -241,28 +241,40 @@ ENDC
 
 	ld e, 0                    ; Use E as our step counter
 .mainLoop
-	ld l, e
-	sra l
-	res 0, l
-	ld h, HIGH(ByLUT)
-	ld a, [hli]
-	ld c, a
-	ld b, [hl]
-	ld d, TILE_SIZE * 3        ; Copy 3 tiles
-	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
 	rst WaitVBlank             ; Wait for the next VBlank
 
-.copyLoop
-	ld a, [bc]                 ; Load a byte from the address BC point to into A
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	inc bc                     ; Increment the source pointer in BC
-	dec d                      ; Decrement the loop counter in D
-	jr nz, .copyLoop           ; Stop if D is zero, otherwise keep looping
+	ld a, e                    ; Load the step counter into A
+	and 3                      ; Shift Y every 4th step (and clear CF)
+	jr nz, .byDone             ; If not on 4th step, skip to updating E
 
-IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
-	call InitBy                ; Restore BY tile mapping
-ENDC
-	
+	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
+	bit 2, e                   ; Shift B every 8th step
+	jr z, .yShift              ; If not on 8th step, skip to shifting Y
+
+.bLoop
+	rr [hl]                    ; Shift the left tile to the right
+	set 5, l                   ; Advance to the middle tile
+	rr [hl]                    ; Shift the middle tile to the right
+	ld a, l                    ; Load the lower address byte into A
+	sub TILE_SIZE * 2 - 2      ; Go back to the left tile and advance to the next row
+	ld l, a                    ; Update the lower address byte
+	bit 4, l                   ; Tile boundary crossed?
+	jr z, .bLoop               ; If not, keep looping
+
+.yShift
+	ld l, LOW(T_INTRO_BY_1 << 4) | 1
+
+.yLoop
+	rr [hl]                    ; Shift the middle tile to the right
+	set 4, l                   ; Advance to the right tile
+	rr [hl]                    ; Shift the right tile to the right
+	ld a, l                    ; Load the lower address byte into A
+	sub TILE_SIZE - 2          ; Go back to the middle tile and advance to the next row
+	ld l, a                    ; Update the lower address byte
+	bit 4, l                   ; Tile boundary crossed?
+	jr z, .yLoop               ; If not, keep looping
+
+.byDone
 	ld d, HIGH(IntroLUT)       ; Set the upper address byte to the start of our LUT
 
 	INTRO_META_SET E           ; Update E's tiles
@@ -325,7 +337,7 @@ ENDC
 
 	inc e                      ; Increment the step counter
 	bit 7, e                   ; Step 128 reached?
-	jr z, .mainLoop            ; If not, continue to loop
+	jp z, .mainLoop            ; If not, continue to loop
 
 IF DEF(INTRO_SONG) && INTRO_SONG_DELAY
 	ld b, INTRO_SONG_DELAY     ; Small delay for the audio to finish playing
@@ -337,15 +349,6 @@ IF DEF(INTRO_SONG) && INTRO_SONG_DELAY
 	dec b                      ; Decrement the loop counter
 	jr nz, .songLoop           ; Continue to loop unless zero
 ENDC
-
-	ret
-
-
-SECTION "ByLUT", ROM0, ALIGN[8]
-ByLUT:
-FOR I, 32
-	dw ByTiles + I * 48
-ENDR
 
 
 SECTION "Intro Subroutines", ROM0
@@ -602,23 +605,22 @@ SetDoubleObject:
 	add TILE_HEIGHT            ; Advance the Y coordinate
 	jr SetObject.cont1         ; Proceed to set object
 
-Color8:
-
-IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
-	ld a, T_INTRO_BY_2         ; Load left tile ID
-	call SetBy                 ; Update BY tile mapping
-ENDC
 
 IF DEF(COLOR8)
-FOR I, 0, 3
-IF I == 0
-	ld hl, wShadowOAM + OAMA_TILEID
-ELSE
-	ld l, I * OBJ_SIZE + OAMA_TILEID
-ENDC
-	ld a, T_INTRO_NOT_2 + I
+
+Color8:
+	ld b, 1                    ; Set the palette to 1
+	call SetByAttrs            ; Set attributes
+
+	ld hl, wShadowOAM + OBJ_INTRO_NOT * OBJ_SIZE + OAMA_TILEID
+	ld a, T_INTRO_NOT_2
+	ld [hl], a
+	ld l, (OBJ_INTRO_NOT + 1) * OBJ_SIZE + OAMA_TILEID
+	inc a
+	ld [hl], a
+	ld l, OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
+	ld a, T_INTRO_TOP_0_2
 	ld [hli], a
-ENDR
 	xor a
 FOR I, 0, 8
 IF I > 0
@@ -627,21 +629,31 @@ ENDC
 	ld [hl], a
 	inc a
 ENDR
-ENDC
 
 	ret
 
+ENDC
+
 InitBy:
 	ld a, T_INTRO_BY           ; Load left tile ID
-	; Fall through
-
-SetBy:
 	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
 	ld [hli], a                ; Set left tile
-	inc a                      ; Increment tile ID
+	ld a, T_INTRO_BY_1         ; Load middle tile ID
 	ld [hli], a                ; Set middle tile
 	inc a                      ; Increment tile ID
-	ld [hli], a                ; Set right tile
+	ld [hl], a                 ; Set right tile
+	ret
+
+SetByAttrs::
+	INIT_VRAM_HL INTRO_BY      ; Load the meta-tile address into the HL register
+	ld a, VBK_BANK             ; Set A to one
+	ldh [rVBK], a              ; Switch the VRAM bank to attributes
+	ld a, b                    ; Load the attributes into A
+	ld [hli], a                ; Set the left tile's attributes
+	ld [hli], a                ; Set the middle tile's attributes
+	ld [hl], a                 ; Set the right tile's attributes
+	xor a                      ; Set A to zero
+	ldh [rVBK], a              ; Switch the VRAM bank back to tile IDs
 	ret
 
 SetPalettes:
@@ -714,24 +726,47 @@ IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
 		xor a
 	ENDC
 	ld [hl], a
-IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
 	ld [hl], a
-ELSE
-	ld [hli], a
-ENDC
 ELSE
 	ld bc, C_INTRO_BOTTOM
 	ld [hl], c
 	ld [hl], b
 ENDC
 
-IF C_INTRO_BY1 != C_INTRO_BOTTOM || C_INTRO_BY2 != C_INTRO_BOTTOM
+REPT 4
+	ld [hl], a
+ENDR
+
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld a, LOW(C_INTRO_BACK)
+	ld [hl], a
+	ld [hl], a
+ELSE
+	ld bc, C_INTRO_BACK
+	ld [hl], c
+	ld [hl], b
+ENDC
+
+IF LOW(C_INTRO_BY1) == HIGH(C_INTRO_BY1)
+	ld a, LOW(C_INTRO_BY1)
+	ld [hl], a
+	ld [hl], a
+ELSE
 	ld bc, C_INTRO_BY1
 	ld [hl], c
 	ld [hl], b
-IF C_INTRO_BY2 != C_INTRO_BY1
-	ld bc, C_INTRO_BY2
 ENDC
+
+IF LOW(C_INTRO_BY2) == HIGH(C_INTRO_BY2)
+	IF C_INTRO_BY2 != C_INTRO_BY1
+		ld a, LOW(C_INTRO_BY2)
+	ENDC
+	ld [hl], a
+	ld [hli], a
+ELSE
+	IF C_INTRO_BY2 != C_INTRO_BY1
+		ld bc, C_INTRO_BY2
+	ENDC
 	ld [hl], c
 	ld [hl], b
 	inc l

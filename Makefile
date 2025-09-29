@@ -27,6 +27,7 @@ T_COMPO_OBJ = A9
 OBJS = \
 	src/main.o \
 	src/intro/intro_main.o \
+	src/intro/intro_cleanup.o \
 	src/intro/intro_copy.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
@@ -51,7 +52,6 @@ INTRO_INC = \
 INTRO_1BPP = \
 	art/intro/intro_not.1bpp \
 	art/intro/intro_top.1bpp \
-	art/intro/intro_by.1bpp \
 	art/intro/intro_reg.1bpp \
 	art/intro/intro_n0.1bpp \
 	art/intro/intro_i.1bpp \
