@@ -50,7 +50,9 @@ INTRO_INC = \
 	inc/intro.inc \
 
 INTRO_1BPP = \
-	art/intro/intro_not.1bpp \
+	art/intro/intro_top_o.1bpp \
+	art/intro/intro_top_n.1bpp \
+	art/intro/intro_top_t.1bpp \
 	art/intro/intro_top.1bpp \
 	art/intro/intro_reg.1bpp \
 	art/intro/intro_n0.1bpp \
@@ -62,8 +64,6 @@ INTRO_1BPP = \
 	art/intro/intro_o.1bpp \
 
 INTRO_2BPP = \
-	art/intro/intro_not.2bpp \
-	art/intro/intro_top_0.2bpp \
 	art/intro/intro_by.2bpp \
 
 COMPO_INC = \
@@ -112,10 +112,13 @@ src/compo.o: src/compo.asm $(INC) $(INTRO_INC) $(COMPO_INC) $(COMPO_2BPP) $(COMP
 %.o: %.asm $(INC)
 	$(RGBASM) $(RGBASMFLAGS) $< -o $@
 
+art/intro/intro_top_o.1bpp: art/intro/intro_top_o.png
+	$(RGBGFX) -d1 $< -o $@
+
 art/intro/%.1bpp: art/intro/%.png
 	$(RGBGFX) -Z -d1 $< -o $@
 
-art/intro/%.2bpp: art/intro/%_gray.png
+art/intro/%.2bpp: art/intro/%.png
 	$(RGBGFX) -c gbc:art/gray.pal $< -o $@
 
 art/compo/compo_logo.2bpp: art/compo/compo_logo.png
