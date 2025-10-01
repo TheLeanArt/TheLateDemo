@@ -136,7 +136,6 @@ LoopCompo:
 
 	ld a, b
 	and $40
-	add LOW(CompoObjMap)
 	ld c, a
 	ld b, HIGH(CompoObjMap)
 .loop4
