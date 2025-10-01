@@ -18,6 +18,12 @@ make
 
 *Note:* `compo_border.*` may be created from `compo_border.png` using the [SGB Border Converter](https://www.marcrobledo.com/super-game-boy-border-converter/).
 
+## Thanks
+
+* calc84maniac for the optimisations
+* ISSOtm for helpful optimisation ideas
+* nitro2k01 and ku🐧 for fixing the colour LUTs
+
 ## License
 
 [MIT License](LICENSE) with the following exception:
