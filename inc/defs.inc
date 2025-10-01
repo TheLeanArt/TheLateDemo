@@ -11,7 +11,7 @@ DEF C_LILAC                 EQU %0_11111_10110_11011
 DEF C_LILAC_SGB             EQU %0_11111_11011_11100
 
 DEF COLOR8                  EQUS ""
-DEF FADEOUT                 EQUS ""
+DEF FADEOUT_DMG             EQUS ""
 DEF FADEOUT_START           EQU  48
 
 DEF C_INTRO_BACK            EQU  C_LILAC

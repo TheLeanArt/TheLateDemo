@@ -22,9 +22,6 @@ Compo::
 	jr .cont0
 
 .nonGBC
-	ld a, %11_10_01_00  ; Default
-	ld [rBGP], a        ; Set the background palette
-	ld [rOBP0], a       ; Set the default object palette
 	ldh a, [hFlags]
 	bit B_FLAGS_SGB, a
 	jr z, .cont0
