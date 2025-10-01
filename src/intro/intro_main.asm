@@ -246,8 +246,6 @@ ENDC
 	jr nz, .shiftDone          ; If yes, skip to updating E
 
 	INIT_VRAM_HL INTRO_TOP     ; Load the top row's address into the HL register
-	xor a                      ; Set A to zero
-	ld [hl], a                 ; Clear any lingering Os
 
 	ld a, e                    ; Load the step counter into A
 	srl a                      ; Divide by 2
@@ -272,13 +270,14 @@ ASSERT (ROW_INTRO_TOP & 1)
 	ld [hld], a                ; Set right tile and decrement the address
 	set TZCOUNT(TILEMAP_WIDTH), l ; Stay within the row
 	dec a                      ; Decrement tile ID
-	ld [hl], a                 ; Set left tile
+	ld [hld], a                ; Set left tile and decrement the address
 
 	ld a, e                    ; Load the step counter into A
 	or a                       ; Skip the first step
 	jr z, .shiftDone           ; If zero, skip to updating E
 	and 3                      ; Shift Y every 4th step (and clear CF)
 	jr nz, .shiftDone          ; If not on 4th step, skip to updating E
+	ld [hl], a                 ; Clear any lingering Os
 
 .bShift
 	ld hl, STARTOF(VRAM) | T_INTRO_BY << 4
