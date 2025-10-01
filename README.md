@@ -21,8 +21,8 @@ make
 ## Thanks
 
 * calc84maniac for the optimisations
-* ISSOtm for helpful optimisation ideas
-* nitro2k01 and ku🐧 for fixing the colour LUTs
+* ISSOtm for great optimisation ideas
+* nitro2k01 and ku🐧 for helping to fix the colour LUTs
 
 ## License
 
