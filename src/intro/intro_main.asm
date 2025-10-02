@@ -363,17 +363,22 @@ IF DEF(INTRO_FADEOUT)
 	jr z, .fadeOutSGB          ; If not, proceed to fade out SGB
 
 .fadeOutGBC
-	push de                    ; Save the step counter
 	ld hl, FadeOutLUT          ; Load LUT address into HL
 	call ReadLUT2              ; Read color values
+	ldh [hColorLow], a         ; Set the background color's lower byte
+	ld a, d                    ; Load the background's upper byte into A
+	ldh [hColorHigh], a        ; Set the background color's upper byte
+	ld a, e                    ; Load the step counter into A
+	add a                      ; Multiply by 2
 	and 2                      ; Isolate the 2nd lowest bit
-	add LOW(rBGPI)             ; Add lower register address byte
+	ld hl, rBGPI               ; Load the index register address into HL
+	add l                      ; Add lower register address byte
 	ld l, a                    ; Load the result into L
-	ld h, HIGH(rBGPI)          ; Load upper register address byte into H
 	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld [hl], e                 ; Set the background's lower byte
+	ldh a, [hColorLow]         ; Load the background's lower byte into A
+	ld [hl], a                 ; Set the background's lower byte
 	ld [hl], d                 ; Set the background's upper byte
 	ld [hl], c                 ; Set the foreground's lower byte
 	ld [hl], b                 ; Set the foreground's upper byte
@@ -381,14 +386,9 @@ IF DEF(INTRO_FADEOUT)
 	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ld a, e                    ; Load the background's lower byte
+	ldh a, [hColorLow]         ; Load the background's lower byte into A
 	ld [hl], a                 ; Set the background's lower byte
-	ldh [hColorLow], a         ; Set the background color's lower byte
-	ld a, d                    ; Load the background's upper byte
-	ld [hl], a                 ; Set the background's upper byte
-	ldh [hColorHigh], a        ; Set the background color's upper byte
-.fadeOutGBCdone
-	pop de                     ; Restore the step counter
+	ld [hl], d                 ; Set the background's upper byte
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
@@ -989,7 +989,7 @@ ReadLUT2:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 1, l                   ; Clear the 2nd lowest bit
-	ld e, [hl]                 ; Load the background's lower byte into E
+	ld a, [hl]                 ; Load the background's lower byte into A
 	inc l                      ; Increment lower LUT address byte
 	ld d, [hl]                 ; Load the background's upper byte into D
 	inc l                      ; Increment lower LUT address byte
