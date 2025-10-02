@@ -929,16 +929,13 @@ IF DEF(INTRO_FADEIN_SGB)
 .fadeInLoop
 	rst WaitVBlank             ; Wait for the next VBlank
 	ld a, e                    ; Load the value in E into A
-	push de                    ; Save the step counter
 	ld hl, FadeInSGBLUT        ; Load LUT address into HL
 	call ReadLUT               ; Read color
 	ld hl, wPacketBuffer + 2   ; Load the background's address into HL
-	ld a, b                    ; Load the background's upper byte into A
 	ld [hld], a                ; Set and move back
-	ld a, c                    ; Load the background's lower byte into A
+	ld a, b                    ; Load the background's lower byte into A
 	ld [hld], a                ; Set and move back
 	call SGB_SendPacket        ; Set SGB palette
-	pop de                     ; Restore the step counter
 	inc e                      ; Increment the step counter
 
 ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
@@ -960,15 +957,24 @@ Sleep:
 	ret
 
 
-IF DEF(INTRO_FADEIN_SGB) || DEF(INTRO_FADEOUT)
+IF DEF(INTRO_FADEIN_SGB)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	jr ReadLUT2.cont           ; Proceed to read the foreground
-	
+	ld b, [hl]                 ; Load the foreground's lower byte into B
+	inc l                      ; Increment lower LUT address byte
+	ld a, [hl]                 ; Load the foreground's upper byte into A
+	ret
+
+ENDC
+
+
+IF DEF(INTRO_FADEOUT)
+
+SECTION "ReadLUT2", ROM0
 ReadLUT2:
 	add a                      ; Multiply by 2
 	add l                      ; Add lower address byte
@@ -978,7 +984,6 @@ ReadLUT2:
 	inc l                      ; Increment lower LUT address byte
 	ld d, [hl]                 ; Load the background's upper byte into D
 	inc l                      ; Increment lower LUT address byte
-.cont
 	ld c, [hl]                 ; Load the foreground's lower byte into C
 	inc l                      ; Increment lower LUT address byte
 	ld b, [hl]                 ; Load the foreground's upper byte into B

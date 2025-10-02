@@ -8,10 +8,9 @@ include "sgb.inc"
 
 
 MACRO SEND_BIT
-	ldh [c], a          ; 5 cycles
+	ldh [rJOYP], a      ; 5 cycles
 	ld a, $FF           ; end pulse
-	nop
-	ldh [c], a          ; 15 cycles
+	ldh [rJOYP], a      ; 15 cycles
 ENDM
 
 SECTION "SGB_SendPacket", ROM0
@@ -38,14 +37,14 @@ SGB_TrySendPacket::
 	; Fall through
 
 SGB_SendPacket::
-	ld bc, SGB_PACKET_SIZE << 8 | LOW(rP1)
+	ld b, SGB_PACKET_SIZE
 	xor a               ; start bit
 	SEND_BIT
 
 .byteLoop
 	ld d, [hl]
 	inc hl
-	ld e, 8
+	ld c, 8
 
 .bitLoop
 	xor a               ; load A with SGB bit
@@ -55,10 +54,9 @@ SGB_SendPacket::
 	inc a
 	swap a
 	nop
-	nop
 	SEND_BIT
 
-	dec e
+	dec c
 	jr nz, .bitLoop
 	dec b
 	jr nz, .byteLoop
@@ -75,7 +73,7 @@ SGB_SendPacket::
 	ENDR
 
 	ld a, JOYP_GET_CTRL_PAD
-	ldh [c], a
+	ldh [rJOYP], a
 	ret
 
 
