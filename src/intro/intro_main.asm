@@ -394,21 +394,18 @@ IF DEF(INTRO_FADEOUT)
 .fadeOutSGB
 	bit 0, a                   ; Is the lower bit set?
 	jr nz, .fadeOutDone        ; If yes, proceed to play sound
-	push de                    ; Save the step counter
 	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
-	call ReadLUT2              ; Read color values
+	call ReadSGBLUT2           ; Read color values
 	ld hl, wPacketBuffer + 8   ; Load the foreground's address into HL
-	ld a, b                    ; Load the foreground's upper byte into A
 	ld [hld], a                ; Set and move back
-	ld a, c                    ; Load the foreground's lower byte into A
+	ld a, b                    ; Load the foreground's lower byte into A
 	ld [hld], a                ; Set and move back
 	ld l, LOW(wPacketBuffer + 2) ; Load the background's lower address byte into L
-	ld a, d                    ; Load the background's upper byte into A
+	ld a, c                    ; Load the background's upper byte into A
 	ld [hld], a                ; Set and move back
-	ld a, e                    ; Load the background's lower byte into A
+	ld a, d                    ; Load the background's lower byte into A
 	ld [hld], a                ; Set and move back
 	call SGB_SendPacket        ; Set SGB palette
-	pop de                     ; Restore the step counter
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutDMG
@@ -957,13 +954,25 @@ Sleep:
 	ret
 
 
-IF DEF(INTRO_FADEIN_SGB)
+IF DEF(INTRO_FADEIN_SGB) || DEF(INTRO_FADEOUT)
 
 SECTION "ReadLUT", ROM0
 ReadLUT:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
+	jr ReadSGBLUT2.cont        ; Proceed to read the values
+
+ReadSGBLUT2:
+	add a                      ; Multiply by 2
+	add l                      ; Add lower address byte
+	ld l, a                    ; Load the result into L
+	res 1, l                   ; Clear the 2nd lowest bit
+	ld d, [hl]                 ; Load the background's lower byte into D
+	inc l                      ; Increment lower LUT address byte
+	ld c, [hl]                 ; Load the background's upper byte into C
+	inc l                      ; Increment lower LUT address byte
+.cont
 	ld b, [hl]                 ; Load the foreground's lower byte into B
 	inc l                      ; Increment lower LUT address byte
 	ld a, [hl]                 ; Load the foreground's upper byte into A
