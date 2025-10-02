@@ -6,6 +6,7 @@
 include "hardware.inc"
 include "common.inc"
 include "defs.inc"
+include "intro.inc"
 include "gradient.inc"
 
 
@@ -160,7 +161,7 @@ hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
 
 
-IF DEF(GRADIENT)
+IF DEF(GRADIENT) || DEF(INTRO_FADEOUT)
 
 SECTION "Current Color", HRAM
 hColorLow::
