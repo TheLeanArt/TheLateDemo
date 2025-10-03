@@ -60,34 +60,8 @@ SECTION FRAGMENT "Intro", ROM0
 Intro::
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	jr z, .trySGB              ; If not, proceed to try setting SGB palettes
-	call SetPalettes           ; Set GBC palettes
-	jr .cont                   ; Proceed to initialize objects
+	call nz, SetPalettes       ; If yes, set SGB palettes
 
-.trySGB
-	bit B_FLAGS_SGB, a         ; Are we running on SGB?
-	jr z, .cont                ; If not, proceed to initialize objects
-
-	ld hl, wPacketBuffer + SGB_PACKET_SIZE - 1
-.clearLoop
-	xor a                      ; Set A to zero
-	ld [hld], a                ; Set and move back
-	or l                       ; Buffer start reached?
-	jr nz, .clearLoop          ; If not, continue to loop
-
-IF !DEF(INTRO_FADEIN_SGB)
-
-	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
-	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
-	call SGB_SetBackground01     ; Set SGB background
-
-ELSE
-
-	call SGB_SetPalettes01     ; Set SGB palette
-
-ENDC
-
-.cont
 	call InitTop               ; Initialize our objects
 	call ClearOAM              ; Clear the remaining shadow OAM
 	call CopyIntro             ; Copy our tiles
@@ -893,11 +867,30 @@ ENDC
 SECTION "IntroInitSGB", ROM0
 IntroInitSGB:
 
+	ld hl, wPacketBuffer + SGB_PACKET_SIZE - 1
+.clearLoop
+	xor a                      ; Set A to zero
+	ld [hld], a                ; Set and move back
+	or l                       ; Buffer start reached?
+	jr nz, .clearLoop          ; If not, continue to loop
+
+IF !DEF(INTRO_FADEIN_SGB)
+
+	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
+	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
+	call SGB_SetBackground01     ; Set SGB background
+
+ENDC
+
 	ld e, INTRO_SGB_DELAY      ; ~1 sec delay to make up for the SGB bootup animation
+.sleepLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld l, LOW(wPacketBuffer)   ; Clear lower address byte
+	call SGB_SetPalettes01     ; Set SGB palette
+	dec e                      ; Decrement the counter
+	jr nz, .sleepLoop          ; Continue to loop unless zero
 
 IF DEF(INTRO_FADEIN_SGB)
-
-	call Sleep                 ; Sleep
 
 .fadeInLoop
 	rst WaitVBlank             ; Wait for the next VBlank
@@ -908,17 +901,15 @@ IF DEF(INTRO_FADEIN_SGB)
 	inc e                      ; Increment the step counter
 
 ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
-
 	bit TZCOUNT(INTRO_FADEIN_SGB_LENGTH) + 1, e
 	jr z, .fadeInLoop          ; If length not reached, continue to loop
-	ret
-
-ELSE
-
-	; Fall through
 
 ENDC
 
+	ret
+
+
+SECTION "Sleep", ROM0
 Sleep:
 	rst WaitVBlank             ; Wait for the next VBlank
 	dec e                      ; Decrement the counter
