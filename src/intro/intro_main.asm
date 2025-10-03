@@ -888,11 +888,7 @@ ENDC
 IF DEF(INTRO_FADEIN_SGB)
 
 .fadeInLoop
-	rst WaitVBlank             ; Wait for the next VBlank
-	ld a, e                    ; Load the value in E into A
-	ld hl, FadeInSGBLUT        ; Load LUT address into HL
-	call ReadLUT               ; Read color
-	call SGB_SetBackground01   ; Set SGB background
+	call FadeSGB               ; Update SGB palette
 	inc e                      ; Increment the step counter
 
 ASSERT(INTRO_FADEIN_SGB_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_SGB_LENGTH))
@@ -914,15 +910,18 @@ Sleep:
 
 IF DEF(INTRO_FADEIN_SGB)
 
-SECTION "ReadLUT", ROM0
-ReadLUT:
+SECTION "FadeSGB", ROM0
+FadeSGB::
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld hl, FadeInSGBLUT        ; Load LUT address into HL
+	ld a, e                    ; Load the step counter into A
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
 	ld c, [hl]                 ; Load the foreground's lower byte into D
 	inc l                      ; Increment lower LUT address byte
 	ld b, [hl]                 ; Load the foreground's upper byte into A
-	ret
+	jp SGB_SetBackground01     ; Set SGB background and return
 
 ENDC
 
