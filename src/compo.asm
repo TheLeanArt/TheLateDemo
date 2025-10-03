@@ -278,14 +278,14 @@ InitSGB:
 	ld c, SGB_PACKET_SIZE
 	call CopyShort
 
-	ld e, (INTRO_FADEIN_SGB_LENGTH - 1) * 2
+	ld e, INTRO_FADEIN_SGB_LENGTH * 2 - 1
 .fadeOutLoop
 	call FadeSGB
 	call DoSoundSafe
 	dec e
 	jr nz, .fadeOutLoop
 
-	call FadeSGB
+	rst WaitVBlank
 	call DoSoundSafe
 
 .fadeInLoop

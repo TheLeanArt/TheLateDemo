@@ -913,6 +913,8 @@ IF DEF(INTRO_FADEIN_SGB)
 SECTION "FadeSGB", ROM0
 FadeSGB::
 	rst WaitVBlank             ; Wait for the next VBlank
+	bit 0, e                   ; Are we on an even step?
+	ret nz                     ; If not, return
 	ld hl, FadeInSGBLUT        ; Load LUT address into HL
 	ld a, e                    ; Load the step counter into A
 	add l                      ; Add lower address byte
