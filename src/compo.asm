@@ -5,6 +5,7 @@
 include "hardware.inc"
 include "common.inc"
 include "defs.inc"
+include "intro.inc"
 include "compo.inc"
 include "gradient.inc"
 include "sgb.inc"
@@ -32,9 +33,6 @@ Compo::
 .cont0
 	rst ScreenOff
 	call CopyCompo
-
-	call SGB_TryUnfreeze
-
 	call hUGE_dosound
 
 .compo0
@@ -250,6 +248,16 @@ ClearShort:
 	ret
 
 
+SECTION "CopyShort", ROM0
+CopyShort:
+	ld a, [de]          ; Load a byte from the address DE points to into the register A
+	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
+	inc e               ; Increment the destination pointer in E
+	dec c               ; Decrement the loop counter
+	jr nz, CopyShort    ; Stop if C is zero, otherwise keep looping
+	ret
+
+
 SECTION "InitSGB", ROM0
 InitSGB:
 	call SGB_InitVRAM
@@ -264,8 +272,35 @@ InitSGB:
 	ld de, BorderSGB
 	call SGB_SendBorder
 	call ClearVRAM
-	ld hl, CompoPaletteSGB
-	jp SGB_SendPacket
+	call SGB_TryUnfreeze
+	ld de, CompoPaletteSGB
+	ld hl, wPacketBuffer
+	ld c, SGB_PACKET_SIZE
+	call CopyShort
+
+	ld e, (INTRO_FADEIN_SGB_LENGTH - 1) * 2
+.fadeOutLoop
+	call FadeSGB
+	call DoSoundSafe
+	dec e
+	jr nz, .fadeOutLoop
+
+	call FadeSGB
+	call DoSoundSafe
+
+.fadeInLoop
+	call FadeSGB
+	call DoSoundSafe
+	inc e
+	bit TZCOUNT(INTRO_FADEIN_SGB_LENGTH) + 1, e
+	jr z, .fadeInLoop
+	
+	; Fall through
+DoSoundSafe:
+	push de
+	call hUGE_dosound
+	pop de
+	ret
 
 ClearVRAM:
 	ld hl, TILEMAP0
@@ -277,17 +312,12 @@ ClearVRAM:
 	jr z, .loop
 	; Fall through
 
-DoSound4::
-	call DoSound2
-	; Fall through
-
 DoSound2::
 	call DoSound
 	; Fall through
 
 DoSound::
 	jp hUGE_dosound
-
 
 InitGBC:
 	rst WaitVBlank
