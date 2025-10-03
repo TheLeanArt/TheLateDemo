@@ -66,8 +66,6 @@ Intro::
 	call ClearOAM              ; Clear the remaining shadow OAM
 	call CopyIntro             ; Copy our tiles
 
-	call SGB_TryFreeze         ; Freeze SGB display
-
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
 	call InitOAndBy            ; Draw top O and BY on the background
@@ -138,8 +136,6 @@ ENDC
 
 	ld a, LCDC_ON | LCDC_BG_ON | LCDC_BLOCK01 | LCDC_OBJ_ON | LCDC_WIN_ON | LCDC_WIN_9C00
 	ldh [rLCDC], a             ; Enable and configure the LCD
-
-	call SGB_TryUnfreeze       ; Unfreeze SGB display
 
 IF DEF(INTRO_SONG)
 	ld hl, INTRO_SONG          ; Load the song address into the HL register
