@@ -36,17 +36,23 @@ SGB_Unfreeze::
 
 SGB_SetColors01::
 	ld hl, wPacketBuffer + A_SGB_PAL01_PAL_0_COLOR_3 + 1
-	ld [hld], a                ; Set and move back
-	ld a, b                    ; Load the foreground's lower byte into A
-	ld [hld], a                ; Set and move back
-	ld a, c                    ; Load the background's upper byte into A
-	; Fall through
+	ld [hl], b                 ; Set the foreground's upper byte
+	dec l                      ; Move back
+	ld [hl], c                 ; Set the foreground's lower byte
+
+	ld l, A_SGB_PAL01_COLOR_0 + 1
+	ld [hl], d                 ; Set the background's upper byte
+	jr SGB_SetBackground01.cont; Proceed to set the background's lower byte
 
 SGB_SetBackground01::
 	ld hl, wPacketBuffer + A_SGB_PAL01_COLOR_0 + 1
-	ld [hld], a                ; Set and move back
-	ld a, d                    ; Load the background's lower byte into A
-	ld [hld], a                ; Set and move back
+	ld [hl], b                 ; Set the background's upper byte
+	ld a, c                    ; Load the background's lower byte into A
+	; Fall through
+
+.cont
+	dec l                      ; Move back
+	ld [hld], a                ; Set the background's lower byte and move back
 	; Fall through
 
 SGB_SetPalettes01::
