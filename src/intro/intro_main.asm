@@ -339,18 +339,18 @@ IF DEF(INTRO_FADEOUT)
 	ld [hl], d                 ; Set the background's upper byte
 	ld [hl], c                 ; Set the foreground's lower byte
 	ld [hl], b                 ; Set the foreground's upper byte
+	ld c, a                    ; Store the background's lower byte in C
 	dec l                      ; Move back to the index register
 	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
 	ld [hli], a                ; Set index register and advance to value register
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ldh a, [hColorLow]         ; Load the background's lower byte into A
-	ld [hl], a                 ; Set the background's lower byte
+	ld [hl], c                 ; Set the background's lower byte
 	ld [hl], d                 ; Set the background's upper byte
 	jr .fadeOutDone            ; Proceed to play sound
 
 .fadeOutSGB
 	ld hl, FadeOutSGBLUT       ; Load LUT address into HL
-	call ReadSGBLUT2           ; Read color values
+	call ReadLUT2              ; Read color values
 	call SGB_SetColors01       ; Set SGB colors
 	jr .fadeOutDone            ; Proceed to play sound
 
@@ -872,9 +872,8 @@ IntroInitSGB:
 
 IF !DEF(INTRO_FADEIN_SGB)
 
-	ld a, HIGH(C_INTRO_BACK_SGB) ; Load the background's upper byte into A
-	ld d, LOW(C_INTRO_BACK_SGB)  ; Load the background's lower byte into A
-	call SGB_SetBackground01     ; Set SGB background
+	ld bc, C_INTRO_BACK_SGB    ; Load the color value into BC
+	call SGB_SetBackground01   ; Set SGB background
 
 ENDC
 
@@ -920,28 +919,9 @@ ReadLUT:
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	ld d, [hl]                 ; Load the foreground's lower byte into D
+	ld c, [hl]                 ; Load the foreground's lower byte into D
 	inc l                      ; Increment lower LUT address byte
-	ld a, [hl]                 ; Load the foreground's upper byte into A
-	ret
-
-ENDC
-
-
-IF DEF(INTRO_FADEOUT)
-
-ReadSGBLUT2:
-	add a                      ; Multiply by 2
-	add l                      ; Add lower address byte
-	ld l, a                    ; Load the result into L
-	res 1, l                   ; Clear the 2nd lowest bit
-	ld d, [hl]                 ; Load the background's lower byte into D
-	inc l                      ; Increment lower LUT address byte
-	ld c, [hl]                 ; Load the background's upper byte into C
-	inc l                      ; Increment lower LUT address byte
-	ld b, [hl]                 ; Load the foreground's lower byte into B
-	inc l                      ; Increment lower LUT address byte
-	ld a, [hl]                 ; Load the foreground's upper byte into A
+	ld b, [hl]                 ; Load the foreground's upper byte into A
 	ret
 
 ENDC
