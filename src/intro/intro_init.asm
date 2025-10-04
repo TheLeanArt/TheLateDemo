@@ -24,9 +24,12 @@ ENDM
 
 SECTION FRAGMENT "Intro", ROM0
 Intro::
+
+IF !DEF(INTRO_FADEIN_GBC)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	bit B_FLAGS_GBC, a         ; Are we running on GBC?
 	call nz, SetPalettes       ; If yes, set SGB palettes
+ENDC
 
 .initTop
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
@@ -38,5 +41,4 @@ FOR I, 1, INTRO_TOP_COUNT
 	INTRO_TOP_INIT {d:I}
 ENDR
 
-	call InitReg               ; Initialize the ® object
 	call ClearOAM              ; Clear the remaining shadow OAM

@@ -123,11 +123,47 @@ ENDC
 
 	ldh a, [hFlags]            ; Load our flags into the A register
 	ld c, a                    ; Store the flags in the C register
+
+IF DEF(INTRO_FADEIN_GBC)
+
+	bit B_FLAGS_GBC, a         ; Are we running on GBC?
+	jr z, .initCont            ; If not, proceed to try initializing SGB
+
+	ld e, 0                    ; Use E as our step counter
+.fadeInLoop
+	rst WaitVBlank             ; Wait for the next VBlank
+	ld a, e                    ; Load the step counter into A
+	ld hl, FadeInGBCLUT        ; Load LUT address into HL
+	call ReadLUT2              ; Read color values
+	ldh [hColorLow], a         ; Set the background color's lower byte
+	ld a, d                    ; Load the background's upper byte into A
+	ldh [hColorHigh], a        ; Set the background color's upper byte
+	ld hl, rBGPI               ; Load the index register address into HL
+	call SetColors2            ; Write color values
+	inc e                      ; Increment the step counter
+ASSERT(INTRO_FADEIN_GBC_LENGTH == 1 << TZCOUNT(INTRO_FADEIN_GBC_LENGTH))
+	bit TZCOUNT(INTRO_FADEIN_GBC_LENGTH) + 1, e
+	jr z, .fadeInLoop          ; If length not reached, continue to loop
+	
+	call SetPalettes           ; Set the remaining palettes
+	jr .drop                   ; Proceed to drop
+
+.initCont
+
+ENDC
+
 	and FLAGS_SGB              ; Are we running on SGB?
 	call nz, IntroInitSGB      ; If yes, initialize SGB
 
 .drop
+	call InitReg               ; Initialize the ® object
+	call hFixedOAMDMA          ; Prevent flicker
+
 	ld e, 0                    ; Use E as our step counter
+	INIT_VRAM_HL REG2          ; Load the window ® address into the HL register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld [hl], e                 ; Clear ®
+
 .dropLoop
 	rst WaitVBlank             ; Wait for the next VBlank
 	ld hl, wShadowOAM          ; Start from the top
@@ -310,14 +346,7 @@ IF DEF(INTRO_FADEOUT)
 	ld hl, rBGPI               ; Load the index register address into HL
 	add l                      ; Add lower register address byte
 	ld l, a                    ; Load the result into L
-	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
-	ld [hli], a                ; Set index register and advance to value register
-	rst WaitVRAM               ; Wait for VRAM to become accessible
-	ldh a, [hColorLow]         ; Load the background's lower byte into A
-	ld [hl], a                 ; Set the background's lower byte
-	ld [hl], d                 ; Set the background's upper byte
-	ld [hl], c                 ; Set the foreground's lower byte
-	ld [hl], b                 ; Set the foreground's upper byte
+	call SetColors2            ; Write color values
 	ld c, a                    ; Store the background's lower byte in C
 	dec l                      ; Move back to the index register
 	ld a, BGPI_AUTOINC | 8     ; Start at palette 1 color 0 and autoincrement
@@ -558,7 +587,10 @@ ClearLogo:
 	ret
 
 SetLogo:
-	call .logo
+	call .logo                 ; Set the first row
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, T_REG                ; Load ®'s tile ID into A
+	ld [hl], a                 ; Set ®
 	ld l, (ROW_LOGO2 + 1) * TILEMAP_WIDTH + COL_LOGO
 	; Fall through
 
@@ -575,12 +607,12 @@ SetLogo:
 
 
 SECTION "SetObject", ROM0
-InitReg::
-IF T_INTRO_REG != T_INTRO_TOP_9 + 1
+InitReg:
 	ld b, T_INTRO_REG          ; Load tile ID
-ENDC
 	                           ; Compensate for width adjustment
 	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
+	ld hl, wShadowOAM + OBJ_INTRO_REG * OBJ_SIZE
+
 ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ldh a, [hFlags]            ; Load our flags into the A register
 	and FLAGS_DMG0             ; Isolate the DMG0 flag
@@ -900,8 +932,7 @@ FadeSGB::
 
 ENDC
 
-
-IF DEF(INTRO_FADEOUT)
+IF DEF(INTRO_FADEIN_GBC) || DEF(INTRO_FADEOUT)
 
 SECTION "ReadLUT2", ROM0
 ReadLUT2:
@@ -917,6 +948,28 @@ ReadLUT2:
 	inc l                      ; Increment lower LUT address byte
 	ld b, [hl]                 ; Load the foreground's upper byte into B
 	ret
+
+
+SECTION "SetColors2", ROM0
+SetColors2:
+	ld a, BGPI_AUTOINC         ; Start at color 0 and autoincrement
+	ld [hli], a                ; Set index register and advance to value register
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ldh a, [hColorLow]         ; Load the background's lower byte into A
+	ld [hl], a                 ; Set the background's lower byte
+	ld [hl], d                 ; Set the background's upper byte
+	ld [hl], c                 ; Set the foreground's lower byte
+	ld [hl], b                 ; Set the foreground's upper byte
+	ret
+
+ENDC
+
+
+IF DEF(INTRO_FADEIN_GBC)
+
+SECTION "FadeInGBCLUT", ROM0, ALIGN[1]
+FadeInGBCLUT:
+	FADEIN_LUT2 INTRO_FADEIN_GBC, C_INTRO_INIT_GBC, C_INTRO_BACK, C_INTRO_BOTTOM
 
 ENDC
 
