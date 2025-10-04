@@ -44,7 +44,11 @@ ENDM
 
 MACRO INIT_COLOR_BACK
 IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
-	ld d, LOW(C_INTRO_BACK)
+	IF LOW(C_INTRO_BACK) == HIGH(rBGPI)
+		ld d, h
+	ELSE
+		ld d, LOW(C_INTRO_BACK)
+	ENDC
 ELSE
 	ld de, C_INTRO_BACK
 ENDC
@@ -53,9 +57,9 @@ ENDM
 MACRO INIT_COLOR
 IF LOW(\1) != LOW(\2) && HIGH(\1) != HIGH(\2) && HIGH(\1) != LOW(\1)
 	ld bc, \1
-ELIF LOW(\1) != LOW(\2)
+ELIF LOW(\1) != LOW(\2) && HIGH(\1) != LOW(\1)
 	ld c, LOW(\1)
-ELIF HIGH(\1) != HIGH(\2)
+ELIF HIGH(\1) != HIGH(\2) && HIGH(\1) != LOW(\1)
 	ld b, HIGH(\1)
 ENDC
 ENDM
