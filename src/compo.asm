@@ -277,6 +277,7 @@ InitSGB:
 	ld hl, wPacketBuffer
 	ld c, SGB_PACKET_SIZE
 	call CopyShort
+	call SGB_Wait4Frames
 
 	ld e, INTRO_FADEIN_SGB_LENGTH * 2 - 1
 .fadeOutLoop

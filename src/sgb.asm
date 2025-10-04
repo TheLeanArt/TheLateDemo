@@ -151,15 +151,15 @@ SGB_SendBorder::
 	call DoSound2
 	; Fall through
 
-SGB_Wait4Frames:
+SGB_Wait4Frames::
 	call SGB_Wait2Frames
 	; Fall through
 
-SGB_Wait2Frames:
+SGB_Wait2Frames::
 	call SGB_Wait1Frame
 	; Fall through
 
-SGB_Wait1Frame:
+SGB_Wait1Frame::
 	halt
 	jp DoSound
 
