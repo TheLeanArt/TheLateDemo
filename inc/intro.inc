@@ -97,12 +97,16 @@ DEF X_INTRO_O            EQU 122
 
 DEF T_LOGO               EQU $01
 DEF T_REG                EQU $19
-DEF T_INTRO_NOT_2        EQU T_REG             +  1
-DEF T_INTRO_BY           EQU T_INTRO_NOT_2     +  2
-DEF T_INTRO_TOP_2_2      EQU T_INTRO_BY        +  1
-DEF T_INTRO_BY_1         EQU T_INTRO_TOP_2_2   +  1
+DEF T_INTRO_REG          EQU T_REG             +  1
+DEF T_INTRO_TOP_0_2      EQU T_INTRO_REG       +  3
+DEF T_INTRO_TOP_1_2      EQU T_INTRO_TOP_0_2   +  1
+DEF T_INTRO_TOP_3_2      EQU T_INTRO_TOP_1_2   +  1
+DEF T_INTRO_TOP_5_2      EQU T_INTRO_TOP_3_2   +  1
+DEF T_INTRO_TOP_6_2      EQU T_INTRO_TOP_5_2   +  1
+DEF T_INTRO_TOP_8_2      EQU T_INTRO_TOP_5_2
+DEF T_INTRO_TOP_9_2      EQU T_INTRO_TOP_6_2   +  1
 
-DEF T_INTRO_TOP_0        EQU $20
+DEF T_INTRO_TOP_0        EQU T_INTRO_TOP_9_2   +  1
 DEF T_INTRO_TOP_1        EQU T_INTRO_TOP_0     +  1
 DEF T_INTRO_TOP_2        EQU T_INTRO_TOP_1     +  1
 DEF T_INTRO_TOP_3        EQU T_INTRO_TOP_2     +  1
@@ -116,7 +120,9 @@ ELSE
 ENDC
 DEF T_INTRO_TOP_8        EQU T_INTRO_TOP_5
 DEF T_INTRO_TOP_9        EQU T_INTRO_TOP_6     +  2
-DEF T_INTRO_REG          EQU T_INTRO_TOP_9     +  1
+
+DEF T_INTRO_BY           EQU T_INTRO_TOP_9     +  1
+DEF T_INTRO_BY_1         EQU T_INTRO_BY        +  2
 
 DEF T_INTRO_TOP_O        EQU $30
 DEF T_INTRO_N            EQU T_INTRO_TOP_O     + 16

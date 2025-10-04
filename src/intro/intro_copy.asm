@@ -14,32 +14,39 @@ CopyIntro:
 	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
 	jr c, CopyIntro            ; Loop until the carry flag is set
 
-	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
-	ld de, TopTiles.n
-	ld bc, $FF00               ; Bitplane 1 only
-	call Copy1bppEven          ; Copy top N
+	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
+	ld de, RegTiles
+	COPY_1BPP_PRE_SAFE Reg     ; Copy ® tiles
+	ld e, LOW(TopTiles)
+	dec b                      ; Clear bitplane 1
+	call Copy1bppOdd           ; Copy top N
 	ld c, b                    ; Set bitplane 0
-	call Copy1bppOdd           ; Copy top T
+	call Copy1bppEven          ; Copy top T
+	ld e, LOW(TopTiles.i)
+	ld c, a                    ; Clear bitplane 0
+	call Copy1bppOdd           ; Copy top I
+
+	ld e, LOW(TopTiles.e)
+	call Copy1bppEven          ; Copy top E
+	ld c, b                    ; Set bitplane 1
+	call Copy1bppOdd           ; Copy top N
+	ld e, LOW(TopTiles.d)
+	call Copy1bppEven          ; Copy top D
+
+	ld e, LOW(TopTiles)
+	COPY_1BPP_PRE_SAFE Top     ; Copy top tiles
+
 	ld e, LOW(ByTiles.b)
 	ld b, a                    ; Clear bitplane 1
 	call Copy1bppEven          ; Copy B
-	ld e, LOW(TopTiles.l)
-	ld b, c                    ; Set bitplane 1
-	ld c, a                    ; Clear bitplane 0
-	call Copy1bppOdd           ; Copy L
-	ld e, LOW(ByTiles.y)
+	call FillSafe              ; Clear the odd tile
 	call Copy2bppEven          ; Copy Y
-	call FillSafe              ; Clear the last tile in the 1st row
-	COPY_1BPP_PRE_SAFE Top     ; Copy ® + top tiles
-	ld hl, STARTOF(VRAM) | T_INTRO_TOP_O << 4
+	call FillSafe              ; Clear the last tile in the 2nd row
+
 	COPY_1BPP_SAFE TopO        ; Copy top O tiles
 
 	ld bc, IntroTiles.end - IntroTiles
-	call CopyPre2Safe
-
-
-SECTION "CopyPre2Safe", ROM0
-CopyPre2Safe:
+.loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
 REPT 2
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
@@ -51,8 +58,7 @@ ENDR
 	dec bc                     ; Decrement the loop counter in BC
 	ld a, b                    ; Load the value in B into A
 	or c                       ; Logical OR the value in A (from B) with C
-	jr nz, CopyPre2Safe        ; If B and C are both zero, OR B will be zero, otherwise keep looping
-	ret
+	jr nz, .loop               ; If B and C are both zero, OR B will be zero, otherwise keep looping
 
 
 SECTION "Copy1bpp", ROM0[$28]
@@ -69,6 +75,7 @@ Copy1bpp:
 
 SECTION "Copy2bppEven", ROM0
 Copy2bppEven:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 	inc e                      ; Increment the source pointer in E
@@ -79,6 +86,7 @@ Copy2bppEven:
 
 SECTION "Copy1bppEven", ROM0
 Copy1bppEven:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	rst Copy1bpp               ; Copy row
 	bit 4, l                   ; Odd tile address reached?
 	jr z, Copy1bppEven         ; If not, continue looping
@@ -87,6 +95,7 @@ Copy1bppEven:
 
 SECTION "Copy1bppOdd", ROM0
 Copy1bppOdd:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	rst Copy1bpp               ; Copy row
 	bit 4, l                   ; Even tile address reached?
 	jr nz, Copy1bppOdd         ; If not, continue looping
@@ -103,6 +112,30 @@ FillSafe:
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]
+RegTiles:
+	INCBIN "intro_reg.1bpp"
+.end
+
+TopTiles:
+	INCBIN "intro_top_n.1bpp"
+.t
+	INCBIN "intro_top_t.1bpp"
+.l
+	INCBIN "intro_top.1bpp",  0,  8
+.i
+	INCBIN "intro_top.1bpp",  8,  8
+.c
+	INCBIN "intro_top.1bpp", 16,  8
+.e
+	INCBIN "intro_top.1bpp", 24,  8
+.n
+	INCBIN "intro_top.1bpp", 32,  8
+.s
+	INCBIN "intro_top.1bpp", 40,  8
+.d
+	INCBIN "intro_top.1bpp", 48,  8
+.end
+
 ByTiles:
 .b
 FOR I, 0, 16, 2
@@ -110,16 +143,6 @@ FOR I, 0, 16, 2
 ENDR
 .y
 	INCBIN "intro_by.2bpp", 16, 16
-
-TopTiles:
-.n
-	INCBIN "intro_top_n.1bpp"
-.t
-	INCBIN "intro_top_t.1bpp"
-.l
-	INCBIN "intro_top.1bpp"
-	INCBIN "intro_reg.1bpp"
-.end
 
 TopOTiles:
 	INCBIN "intro_top_o.1bpp"

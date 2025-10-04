@@ -42,6 +42,52 @@ ELSE
 ENDC
 ENDM
 
+MACRO INIT_COLOR_BACK
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld d, LOW(C_INTRO_BACK)
+ELSE
+	ld de, C_INTRO_BACK
+ENDC
+ENDM
+
+MACRO INIT_COLOR
+IF LOW(\1) != LOW(\2) && HIGH(\1) != HIGH(\2) && HIGH(\1) != LOW(\1)
+	ld bc, \1
+ELIF LOW(\1) != LOW(\2)
+	ld c, LOW(\1)
+ELIF HIGH(\1) != HIGH(\2)
+	ld b, HIGH(\1)
+ENDC
+ENDM
+
+MACRO SET_COLOR_BACK
+IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
+	ld [hl], d
+ELSE
+	ld [hl], e
+ENDC
+	ld [hl], d
+ENDM
+
+MACRO SET_COLOR
+IF LOW(\1) == HIGH(\1)
+	ld [hl], b
+ELSE
+	ld [hl], c
+ENDC
+	ld [hl], b
+ENDM
+
+MACRO SET_PALETTE
+	SET_COLOR_BACK
+	INIT_COLOR \2, \1
+	SET_COLOR \2, \1
+	INIT_COLOR \3, \2
+	SET_COLOR \3, \2
+	INIT_COLOR \4, \3
+	SET_COLOR \4, \3
+ENDM
+
 
 SECTION FRAGMENT "Intro", ROM0
 Intro:
@@ -204,9 +250,9 @@ ENDC
 .regTile
 	inc a                      ; Compensate for step adjustment
 	and INTRO_REG_MASK         ; Isolate rotation step
-	add T_INTRO_REG            ; Add base tile ID
+	add T_REG                  ; Add base tile ID
 	ld [hli], a                ; Set the tile ID
-	sub T_INTRO_REG            ; Subtract base tile ID
+	sub T_REG                  ; Subtract base tile ID
 	jr nz, .regDone            ; If nonzero, skip setting the attributes
 .regAttrs
 	ld a, OAM_XFLIP | OAM_YFLIP; Rotate 180 degrees
@@ -608,7 +654,7 @@ SetLogo:
 
 SECTION "SetObject", ROM0
 InitReg:
-	ld b, T_INTRO_REG          ; Load tile ID
+	ld b, T_REG                ; Load tile ID
 	                           ; Compensate for width adjustment
 	ld de, Y_INTRO_REG << 8 | (X_INTRO_REG + 2)
 	ld hl, wShadowOAM + OBJ_INTRO_REG * OBJ_SIZE
@@ -675,20 +721,35 @@ Color8:
 	call SetByAttrs            ; Set attributes
 
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_NOT_2
+	ld a, T_INTRO_TOP_0_2
 	ld [hl], a
 	ld l, OBJ_INTRO_TOP_1 * OBJ_SIZE + OAMA_TILEID
 	inc a
 	ld [hl], a
-	ld l, OBJ_INTRO_TOP_2 * OBJ_SIZE + OAMA_TILEID
-	ld a, T_INTRO_TOP_2_2
-	ld [hli], a
-	ld a, 1
-	ld [hl], a
-FOR I, 3, INTRO_TOP_COUNT
+
+FOR I, 2, INTRO_TOP_COUNT
+IF I % 3 == 1 || I == 2
 	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_FLAGS
-	ld [hl], a
+IF I > 2
+	inc b
+ENDC
+ELSE
+IF I % 3 == 2 || I == 3
+	DEF _ = (I - 2)
+ELSE
+	DEF _ = (I - 1)
+ENDC
+	ld l, OBJ_INTRO_TOP_{d:I} * OBJ_SIZE + OAMA_TILEID
+IF T_INTRO_TOP_{d:I} == T_INTRO_TOP_{d:_} + 1
 	inc a
+ELIF T_INTRO_TOP_{d:I} == T_INTRO_TOP_{d:_} - 1
+	dec a
+ELSE
+	ld a, T_INTRO_TOP_{d:I}_2
+ENDC
+	ld [hli], a
+ENDC
+	ld [hl], b
 ENDR
 
 	ret
@@ -724,141 +785,31 @@ SetByAttrs::
 	ldh [rVBK], a              ; Switch the VRAM bank back to tile IDs
 	ret
 
+
+SECTION "SetPalette", ROM0
 SetPalettes::
 	ld hl, rBGPI
 	call SetPalette
+	inc l
 
 IF DEF(COLOR8)
-
-FOR I, 2, INTRO_TOP_COUNT
-	ld a, OBPI_AUTOINC | (I - 2) << 3 | 2
+	ld a, OBPI_AUTOINC
 	ld [hli], a
-IF I == 2
-IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
-	IF C_INTRO_BOTTOM
-		ld a, LOW(C_INTRO_BOTTOM)
-	ELSE
-		xor a
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BOTTOM
-	ld [hl], c
-	ld [hl], b
-ENDC
-	ld bc, C_INTRO_TOP_0
-	ld [hl], c
-	ld [hl], b
-	ld bc, C_INTRO_TOP_1
-ELSE
-DEF _ = (I - 1)
-IF HIGH(C_INTRO_TOP_{d:I}) == HIGH(C_INTRO_TOP_{d:_})
-	ld c, LOW(C_INTRO_TOP_{d:I})
-ELIF LOW(C_INTRO_TOP_{d:I}) == LOW(C_INTRO_TOP_{d:_})
-	ld b, HIGH(C_INTRO_TOP_{d:I})
-ELSE
-	ld bc, C_INTRO_TOP_{d:I}
-ENDC
-ENDC
-	ld [hl], c
-	ld [hl], b
-IF I == 3
-	ld bc, C_INTRO_TOP_2
-	ld [hl], c
-	ld [hl], b
-ENDC
-	dec l
-ENDR
+	SET_PALETTE 0, C_INTRO_BOTTOM, C_INTRO_TOP_0, C_INTRO_TOP_1
+	SET_PALETTE C_INTRO_TOP_1, C_INTRO_TOP_2, C_INTRO_TOP_3, C_INTRO_TOP_4
+	SET_PALETTE C_INTRO_TOP_4, C_INTRO_TOP_4, C_INTRO_TOP_5, C_INTRO_TOP_6
+	SET_PALETTE C_INTRO_TOP_6, C_INTRO_TOP_7, C_INTRO_TOP_8, C_INTRO_TOP_9
 	ret
-
 ELSE
-
 	; Fall through
-
 ENDC
 
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
-
-IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
-	ld a, LOW(C_INTRO_BACK)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BACK
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BOTTOM) == HIGH(C_INTRO_BOTTOM)
-	IF C_INTRO_BOTTOM
-		ld a, LOW(C_INTRO_BOTTOM)
-	ELSE
-		xor a
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BOTTOM
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-REPT 4
-	ld [hl], a
-ENDR
-
-IF LOW(C_INTRO_BACK) == HIGH(C_INTRO_BACK)
-	ld a, LOW(C_INTRO_BACK)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BACK
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BY1) == HIGH(C_INTRO_BY1)
-	ld a, LOW(C_INTRO_BY1)
-	ld [hl], a
-	ld [hl], a
-ELSE
-	ld bc, C_INTRO_BY1
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_BY2) == HIGH(C_INTRO_BY2)
-	IF C_INTRO_BY2 != C_INTRO_BY1
-		ld a, LOW(C_INTRO_BY2)
-	ENDC
-	ld [hl], a
-	ld [hl], a
-ELSE
-	IF C_INTRO_BY2 != C_INTRO_BY1
-		ld bc, C_INTRO_BY2
-	ENDC
-	ld [hl], c
-	ld [hl], b
-ENDC
-
-IF LOW(C_INTRO_TOP_O) == HIGH(C_INTRO_TOP_O)
-	IF C_INTRO_TOP_O != C_INTRO_BY2
-		ld a, LOW(C_INTRO_TOP_O)
-	ENDC
-	ld [hl], a
-	ld [hli], a
-ELSE
-	IF C_INTRO_TOP_O != C_INTRO_BY2
-		ld bc, C_INTRO_TOP_O
-	ENDC
-	ld [hl], c
-	ld [hl], b
-	inc l
-ENDC
-
+	INIT_COLOR_BACK
+	SET_PALETTE C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
+	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_BY1, C_INTRO_BY2, C_INTRO_TOP_O
 	ret
 
 
