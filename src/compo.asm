@@ -248,16 +248,6 @@ ClearShort:
 	ret
 
 
-SECTION "CopyShort", ROM0
-CopyShort:
-	ld a, [de]          ; Load a byte from the address DE points to into the register A
-	ld [hli], a         ; Load the byte in the A register to the address HL points to, increment HL
-	inc e               ; Increment the destination pointer in E
-	dec c               ; Decrement the loop counter
-	jr nz, CopyShort    ; Stop if C is zero, otherwise keep looping
-	ret
-
-
 SECTION "InitSGB", ROM0
 InitSGB:
 	call SGB_InitVRAM
@@ -274,10 +264,14 @@ InitSGB:
 	call ClearVRAM
 	call SGB_TryUnfreeze
 
-	ld de, CompoPaletteSGB
+PURGE _
+DEF _ EQUS READFILE("compo_logo.pal")
 	ld l, A_SGB_PAL01_PAL_0_COLOR_1
-	ld c, A_SGB_PAL01_PAL_1_COLOR_1 - A_SGB_PAL01_PAL_0_COLOR_1
-	call CopyShort
+FOR I, 2, 8
+	ld a, STRBYTE(#_, I)
+	ld [hli], a
+ENDR
+
 	call SGB_Wait4Frames
 
 	ld e, INTRO_FADEIN_SGB_LENGTH * 2 - 1
@@ -460,11 +454,6 @@ BorderSGB:
 PctTrnSGB:
 	db SGB_PCT_TRN | $01
 	ds 15, 0
-
-
-SECTION "CompoPaletteSGB", ROM0
-CompoPaletteSGB:
-	INCBIN "compo_logo.pal", 2
 
 
 SECTION "HRAM", HRAM
