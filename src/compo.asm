@@ -273,9 +273,10 @@ InitSGB:
 	call SGB_SendBorder
 	call ClearVRAM
 	call SGB_TryUnfreeze
+
 	ld de, CompoPaletteSGB
-	ld hl, wPacketBuffer
-	ld c, SGB_PACKET_SIZE
+	ld l, A_SGB_PAL01_PAL_0_COLOR_1
+	ld c, A_SGB_PAL01_PAL_1_COLOR_1 - A_SGB_PAL01_PAL_0_COLOR_1
 	call CopyShort
 	call SGB_Wait4Frames
 
@@ -463,11 +464,7 @@ PctTrnSGB:
 
 SECTION "CompoPaletteSGB", ROM0
 CompoPaletteSGB:
-	db SGB_PAL01 | $01
-	dw C_LILAC_SGB
-	INCBIN "compo_logo.pal", 2, 6
-	INCBIN "compo_obj.pal",  2, 6
-	db 0
+	INCBIN "compo_logo.pal", 2
 
 
 SECTION "HRAM", HRAM
