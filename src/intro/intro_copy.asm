@@ -16,30 +16,29 @@ CopyIntro:
 
 	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
 	ld de, RegTiles
-	COPY_1BPP_PRE_SAFE Reg     ; Copy ® tiles
+	COPY_1BPP_SAFE Reg         ; Copy ® tiles
 	ld e, LOW(TopTiles)
-	dec b                      ; Clear bitplane 1
-	call Copy1bppOdd           ; Copy top N
-	ld c, b                    ; Set bitplane 0
-	call Copy1bppEven          ; Copy top T
-	ld e, LOW(TopTiles.i)
-	ld c, a                    ; Clear bitplane 0
-	call Copy1bppOdd           ; Copy top I
-
-	ld e, LOW(TopTiles.e)
+	dec b                      ; Set bitplane 1
+	call Copy1bppEven          ; Copy top N
+	ld e, LOW(TopTiles.l)
+	call Copy1bppOdd           ; Copy top L
+	inc b                      ; Clear bitplane 1
+	dec c                      ; Set bitplane 0
+	call Copy1bppEven          ; Copy top I
+	call Copy1bppOdd           ; Copy top C
+	dec b                      ; Set bitplane 1
+	inc c                      ; Clear bitplane 0
 	call Copy1bppEven          ; Copy top E
-	ld c, b                    ; Set bitplane 1
-	call Copy1bppOdd           ; Copy top N
-	ld e, LOW(TopTiles.d)
-	call Copy1bppEven          ; Copy top D
 
 	ld e, LOW(TopTiles)
-	COPY_1BPP_PRE_SAFE Top     ; Copy top tiles
+	COPY_1BPP_SAFE Top         ; Copy top tiles
 
 	ld e, LOW(ByTiles.b)
-	ld b, a                    ; Clear bitplane 1
+	dec c                      ; Set bitplane 0
 	call Copy1bppEven          ; Copy B
-	call FillSafe              ; Clear the odd tile
+	ld e, LOW(TopTiles.s)
+	call Copy1bppOdd           ; Copy top S
+	ld e, LOW(ByTiles.y)
 	call Copy2bppEven          ; Copy Y
 	call FillSafe              ; Clear the last tile in the 2nd row
 
@@ -48,10 +47,8 @@ CopyIntro:
 	ld bc, IntroTiles.end - IntroTiles
 .loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-REPT 2
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	xor a                      ; Clear the A register
+REPT 4
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 ENDR
 	inc de                     ; Increment the source pointer in DE
@@ -61,15 +58,15 @@ ENDR
 	jr nz, .loop               ; If B and C are both zero, OR B will be zero, otherwise keep looping
 
 
-SECTION "Copy1bpp", ROM0[$28]
-Copy1bpp:
+SECTION "Copy1bppSafe", ROM0
+Copy1bppSafe:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and c                      ; Filter bitplane 0
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and b                      ; Filter bitplane 1
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	inc e                      ; Increment the source pointer in E
+	inc de                     ; Increment the source pointer in DE
+	dec b
+	jr nz, Copy1bppSafe
 	ret
 
 
@@ -87,7 +84,13 @@ Copy2bppEven:
 SECTION "Copy1bppEven", ROM0
 Copy1bppEven:
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	rst Copy1bpp               ; Copy row
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and c                      ; Filter bitplane 0
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and b                      ; Filter bitplane 1
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc e                      ; Increment the source pointer in E
 	bit 4, l                   ; Odd tile address reached?
 	jr z, Copy1bppEven         ; If not, continue looping
 	ret
@@ -96,7 +99,13 @@ Copy1bppEven:
 SECTION "Copy1bppOdd", ROM0
 Copy1bppOdd:
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-	rst Copy1bpp               ; Copy row
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and c                      ; Filter bitplane 0
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and b                      ; Filter bitplane 1
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc e                      ; Increment the source pointer in E
 	bit 4, l                   ; Even tile address reached?
 	jr nz, Copy1bppOdd         ; If not, continue looping
 	ret
