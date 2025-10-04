@@ -8,72 +8,67 @@ include "defs.inc"
 include "intro.inc"
 
 
-SECTION "CopyIntro", ROM0
-CopyIntro::
-	ldh a, [rLY]               ; Read the LY register to check the current scanline
-	cp SCREEN_HEIGHT_PX        ; Compare the current scanline to the first scanline of VBlank
-	jr c, CopyIntro            ; Loop until the carry flag is set
-
-	ld hl, STARTOF(VRAM) | T_INTRO_NOT_2 << 4
-	ld de, TopTiles.n
-	ld bc, $FF00               ; Bitplane 1 only
+SECTION FRAGMENT "Intro", ROM0
+CopyIntro:
+	ld hl, STARTOF(VRAM) | T_INTRO_REG << 4
+	ld de, RegTiles
+	COPY_1BPP_SAFE Reg         ; Copy ® tiles
+	ld e, LOW(TopTiles)
+	dec b                      ; Set bitplane 1
 	call Copy1bppEven          ; Copy top N
-	ld c, b                    ; Set bitplane 0
-	call Copy1bppOdd           ; Copy top T
-	ld e, LOW(ByTiles.b)
-	ld b, a                    ; Clear bitplane 1
-	call Copy1bppEven          ; Copy B
 	ld e, LOW(TopTiles.l)
-	ld b, c                    ; Set bitplane 1
-	ld c, a                    ; Clear bitplane 0
-	call Copy1bppOdd           ; Copy L
+	call Copy1bppOdd           ; Copy top L
+	inc b                      ; Clear bitplane 1
+	dec c                      ; Set bitplane 0
+	call Copy1bppEven          ; Copy top I
+	call Copy1bppOdd           ; Copy top C
+	dec b                      ; Set bitplane 1
+	inc c                      ; Clear bitplane 0
+	call Copy1bppEven          ; Copy top E
+
+	ld e, LOW(TopTiles)
+	COPY_1BPP_SAFE Top         ; Copy top tiles
+
+	ld e, LOW(ByTiles.b)
+	dec c                      ; Set bitplane 0
+	call Copy1bppEven          ; Copy B
+	ld e, LOW(TopTiles.s)
+	call Copy1bppOdd           ; Copy top S
 	ld e, LOW(ByTiles.y)
 	call Copy2bppEven          ; Copy Y
-	call FillSafe              ; Clear the last tile in the 1st row
-	COPY_1BPP_PRE_SAFE Top     ; Copy ® + top tiles
-	ld hl, STARTOF(VRAM) | T_INTRO_TOP_O << 4
+	call FillSafe              ; Clear the last tile in the 2nd row
+
 	COPY_1BPP_SAFE TopO        ; Copy top O tiles
 
-IF T_INTRO_N0 == T_INTRO_E + 32
-	ld bc, Intro2Tiles.end - Intro1Tiles
-ELSE
-	ld bc, Intro1Tiles.end - Intro1Tiles
-	call CopyPre2Safe
-	ld hl, STARTOF(VRAM) | T_INTRO_N0 << 4
-	ld bc, Intro2Tiles.end - Intro2Tiles
-ENDC
-	; Fall through
-
-CopyPre2Safe:
+	ld bc, IntroTiles.end - IntroTiles
+.loop
 	rst WaitVRAM               ; Wait for VRAM to become accessible
-REPT 2
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	xor a                      ; Clear the A register
+REPT 4
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 ENDR
 	inc de                     ; Increment the source pointer in DE
 	dec bc                     ; Decrement the loop counter in BC
 	ld a, b                    ; Load the value in B into A
 	or c                       ; Logical OR the value in A (from B) with C
-	jr nz, CopyPre2Safe        ; If B and C are both zero, OR B will be zero, otherwise keep looping
-	ret
+	jr nz, .loop               ; If B and C are both zero, OR B will be zero, otherwise keep looping
 
 
-SECTION "Copy1bpp", ROM0[$28]
-Copy1bpp:
+SECTION "Copy1bppSafe", ROM0
+Copy1bppSafe:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and c                      ; Filter bitplane 0
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	ld a, [de]                 ; Load a byte from the address DE points to into the A register
-	and b                      ; Filter bitplane 1
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
-	inc e                      ; Increment the source pointer in E
+	inc de                     ; Increment the source pointer in DE
+	dec b
+	jr nz, Copy1bppSafe
 	ret
 
 
 SECTION "Copy2bppEven", ROM0
 Copy2bppEven:
+	rst WaitVRAM               ; Wait for VRAM to become accessible
 	ld a, [de]                 ; Load a byte from the address DE points to into the A register
 	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
 	inc e                      ; Increment the source pointer in E
@@ -84,7 +79,14 @@ Copy2bppEven:
 
 SECTION "Copy1bppEven", ROM0
 Copy1bppEven:
-	rst Copy1bpp               ; Copy row
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and c                      ; Filter bitplane 0
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and b                      ; Filter bitplane 1
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc e                      ; Increment the source pointer in E
 	bit 4, l                   ; Odd tile address reached?
 	jr z, Copy1bppEven         ; If not, continue looping
 	ret
@@ -92,7 +94,14 @@ Copy1bppEven:
 
 SECTION "Copy1bppOdd", ROM0
 Copy1bppOdd:
-	rst Copy1bpp               ; Copy row
+	rst WaitVRAM               ; Wait for VRAM to become accessible
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and c                      ; Filter bitplane 0
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	ld a, [de]                 ; Load a byte from the address DE points to into the A register
+	and b                      ; Filter bitplane 1
+	ld [hli], a                ; Load the byte in the A register to the address HL points to, increment HL
+	inc e                      ; Increment the source pointer in E
 	bit 4, l                   ; Even tile address reached?
 	jr nz, Copy1bppOdd         ; If not, continue looping
 	ret
@@ -108,6 +117,30 @@ FillSafe:
 
 
 SECTION "Intro Tile data", ROM0, ALIGN[8]
+RegTiles:
+	INCBIN "intro_reg.1bpp"
+.end
+
+TopTiles:
+	INCBIN "intro_top_n.1bpp"
+.t
+	INCBIN "intro_top_t.1bpp"
+.l
+	INCBIN "intro_top.1bpp",  0,  8
+.i
+	INCBIN "intro_top.1bpp",  8,  8
+.c
+	INCBIN "intro_top.1bpp", 16,  8
+.e
+	INCBIN "intro_top.1bpp", 24,  8
+.n
+	INCBIN "intro_top.1bpp", 32,  8
+.s
+	INCBIN "intro_top.1bpp", 40,  8
+.d
+	INCBIN "intro_top.1bpp", 48,  8
+.end
+
 ByTiles:
 .b
 FOR I, 0, 16, 2
@@ -116,26 +149,13 @@ ENDR
 .y
 	INCBIN "intro_by.2bpp", 16, 16
 
-TopTiles:
-.n
-	INCBIN "intro_top_n.1bpp"
-.t
-	INCBIN "intro_top_t.1bpp"
-.l
-	INCBIN "intro_top.1bpp"
-	INCBIN "intro_reg.1bpp"
-.end
-
 TopOTiles:
 	INCBIN "intro_top_o.1bpp"
 .end
 
-Intro1Tiles:
+IntroTiles:
 	_0_5_BPP "intro_n.1bpp"
 	_0_5_BPP "intro_e.1bpp"
-.end
-
-Intro2Tiles:
 	_0_5_BPP "intro_n0.1bpp"
 	_0_5_BPP "intro_d.1bpp"
 	_0_5_BPP "intro_o.1bpp"

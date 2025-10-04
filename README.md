@@ -2,7 +2,7 @@
 
 Game Boy startup logo animation + compo logo animation
 
-Music by Nikku4211.
+Music by [Nikku4211](https://github.com/Nikku4211).
 
 ![Cover](https://img.itch.zone/aW1nLzIzMDUyNjcyLnBuZw==/315x250%23c/fDbJDo.png)
 
@@ -20,11 +20,11 @@ make
 
 ## Thanks
 
-* nitro2k01 for the optimisations and for helping to fix the colour LUTs
-* calc84maniac for the optimisations
+* [nitro2k01](https://github.com/nitro2k01) for the optimisations and for helping to fix the colour LUTs
+* [calc84maniac](https://github.com/calc84maniac) for the optimisations
 * ku🐧 for helping to fix the colour LUTs
-* ISSOtm for great optimisation ideas
-* Rangi42 for her endless patience
+* [ISSOtm](https://codeberg.org/ISSOtm) for great optimisation ideas
+* [Rangi42](https://github.com/Rangi42) for her endless patience
 
 ## License
 

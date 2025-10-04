@@ -18,7 +18,6 @@ WaitVRAM::
 	ldh a, [rSTAT]             ; Check the STAT register to figure out which mode the LCD is in
 	and STAT_BUSY              ; AND the value to see if VRAM access is safe
 	jr nz, WaitVRAM            ; If not, proceed to loop
-	nop                        ; Wait for 1 M-cycle
 	ret                        ; Return when VRAM access is safe
 
 
@@ -161,15 +160,11 @@ hFixedOAMDMA::
 	ds FixedOAMDMA.end - FixedOAMDMA
 
 
-IF DEF(GRADIENT) || DEF(INTRO_FADEOUT)
-
 SECTION "Current Color", HRAM
 hColorLow::
 	db
 hColorHigh::
 	db
-
-ENDC
 
 
 SECTION "Shadow OAM", WRAM0, ALIGN[8]
