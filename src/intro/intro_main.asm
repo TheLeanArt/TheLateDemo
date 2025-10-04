@@ -25,19 +25,6 @@ MACRO INTRO_META_SET
 	call SetOddballMetaTile    ; Update the meta-tile
 ENDM
 
-MACRO INTRO_TOP_INIT
-DEF _ = (\1 - 1)
-IF \1 && T_INTRO_TOP_\1 != T_INTRO_TOP_{d:_} + 1
-	ld b, T_INTRO_TOP_\1       ; Load tile ID
-ENDC
-IF \1 && X_INTRO_TOP_\1 == X_INTRO_TOP_{d:_} + INTRO_TOP_NORM_WIDTH
-	call SetNextTopObject      ; Set the next object
-ELSE
-	ld e, X_INTRO_TOP_\1       ; Load X coordinate
-	call SetObject             ; Set the object
-ENDC
-ENDM
-
 MACRO INTRO_BOTTOM_INIT
 	ld b, T_INTRO_\1           ; Load tile ID
 IF \1 == 0
@@ -57,15 +44,7 @@ ENDM
 
 
 SECTION FRAGMENT "Intro", ROM0
-Intro::
-	ldh a, [hFlags]            ; Load our flags into the A register
-	bit B_FLAGS_GBC, a         ; Are we running on GBC?
-	call nz, SetPalettes       ; If yes, set SGB palettes
-
-	call InitTop               ; Initialize our objects
-	call ClearOAM              ; Clear the remaining shadow OAM
-	call CopyIntro             ; Copy our tiles
-
+Intro:
 	INIT_VRAM_HL LOGO          ; Load the background logo address into the HL register
 	call ClearLogo             ; Clear the logo from the background
 	call InitOAndBy            ; Draw top O and BY on the background
@@ -594,18 +573,9 @@ SetLogo:
 	jr nz, .loop
 	ret
 
-InitTop:
-	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
-	ld bc, T_INTRO_TOP_0 << 8  ; Load tile ID and attributes
-	ld de, Y_INTRO_INIT << 8 | X_INTRO_TOP_0
-	call SetObject             ; Set the N object
 
-FOR I, 1, INTRO_TOP_COUNT
-	INTRO_TOP_INIT {d:I}
-ENDR
-	; Fall through
-
-InitReg:
+SECTION "SetObject", ROM0
+InitReg::
 IF T_INTRO_REG != T_INTRO_TOP_9 + 1
 	ld b, T_INTRO_REG          ; Load tile ID
 ENDC
@@ -617,7 +587,7 @@ ASSERT (B_FLAGS_DMG0 == B_OAM_PAL1)
 	ld c, a                    ; Load attributes
 	; Fall through
 
-SetNextTopObject:
+SetNextTopObject::
 	dec e                      ; Adjust width
 	dec e                      ; ...
 	; Fall through
@@ -722,7 +692,7 @@ SetByAttrs::
 	ldh [rVBK], a              ; Switch the VRAM bank back to tile IDs
 	ret
 
-SetPalettes:
+SetPalettes::
 	ld hl, rBGPI
 	call SetPalette
 

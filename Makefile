@@ -26,9 +26,10 @@ T_COMPO_OBJ = A9
 
 OBJS = \
 	src/main.o \
+	src/intro/intro_init.o \
+	src/intro/intro_copy.o \
 	src/intro/intro_main.o \
 	src/intro/intro_cleanup.o \
-	src/intro/intro_copy.o \
 	src/intro/intro_drop.o \
 	src/intro/intro_lut.o \
 	src/compo.o \
