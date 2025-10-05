@@ -654,8 +654,6 @@ SetLogo:
 
 
 SECTION "SetObject", ROM0
-InitReg:
-
 InitTop::
 	ld hl, wShadowOAM + OBJ_INTRO_TOP_0 * OBJ_SIZE
 	ld bc, T_INTRO_TOP_0 << 8  ; Load tile ID and attributes
@@ -808,7 +806,6 @@ SetByAttrs::
 
 SECTION "SetPalette", ROM0
 SetPalettes::
-	INIT_COLOR_BACK
 	ld hl, rBGPI
 	call SetPalette
 	inc l
@@ -837,6 +834,7 @@ ENDC
 SetPalette:
 	ld a, BGPI_AUTOINC
 	ld [hli], a
+	INIT_COLOR_BACK
 	SET_PALETTE C_INTRO_BACK, C_INTRO_BOTTOM, C_INTRO_BOTTOM, C_INTRO_BOTTOM
 	SET_PALETTE C_INTRO_BOTTOM, C_INTRO_BY2, C_INTRO_BY1, C_INTRO_TOP_O
 	ret
@@ -905,9 +903,9 @@ FadeSGB::
 	add l                      ; Add lower address byte
 	ld l, a                    ; Load the result into L
 	res 0, l                   ; Clear the lowest bit
-	ld c, [hl]                 ; Load the backgrounds's lower byte into C
+	ld c, [hl]                 ; Load the background's lower byte into C
 	inc l                      ; Increment lower LUT address byte
-	ld b, [hl]                 ; Load the backgrounds's upper byte into B
+	ld b, [hl]                 ; Load the background's upper byte into B
 	jp SGB_SetBackground01     ; Set SGB background and return
 
 ENDC
