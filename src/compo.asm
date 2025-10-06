@@ -262,7 +262,7 @@ InitSGB:
 	ld de, BorderSGB
 	call SGB_SendBorder
 	call ClearVRAM
-	call SGB_TryUnfreeze
+	call SGB_Unfreeze
 
 PURGE _
 DEF _ EQUS READFILE("compo_logo.pal")
